@@ -21,15 +21,9 @@ class ChamadoFactoryTest {
     @DisplayName("Factory deve criar Incidente corretamente com atributos específicos e SLA inicial")
     void deveCriarIncidenteViaFactory() {
         Incidente inc = ChamadoFactory.criarIncidente(
-                "Sem acesso à internet",
-                "Cabo rompido no corredor",
-                "Amanda",
-                Setor.MARKETING,
-                Categoria.REDE,
-                Prioridade.MEDIA,
-                false,
-                "Bloco B"
-        );
+                "Sem acesso à internet", "Cabo rompido no corredor", "Amanda",
+                Setor.MARKETING, Categoria.REDE, false, "Bloco B");
+        inc.classificarPrioridade(Prioridade.MEDIA);
 
         assertNotNull(inc);
         assertEquals(TipoChamado.INCIDENTE, inc.getTipo());
@@ -46,15 +40,10 @@ class ChamadoFactoryTest {
     @DisplayName("Factory deve criar Requisição corretamente com atributos específicos")
     void deveCriarRequisicaoViaFactory() {
         Requisicao req = ChamadoFactory.criarRequisicao(
-                "Novo usuário no sistema ERP",
-                "Cadastro de novo analista contábil",
-                "Roberto",
-                Setor.FINANCEIRO,
-                Categoria.ACESSO_E_PERMISSAO,
-                Prioridade.ALTA,
-                "Contratação CLT",
-                true
-        );
+                "Novo usuário no sistema ERP", "Cadastro de novo analista contábil", "Roberto",
+                Setor.FINANCEIRO, Categoria.ACESSO_E_PERMISSAO,
+                "Contratação CLT", true);
+        req.classificarPrioridade(Prioridade.ALTA);
 
         assertNotNull(req);
         assertEquals(TipoChamado.REQUISICAO, req.getTipo());
@@ -70,29 +59,19 @@ class ChamadoFactoryTest {
     void deveCriarChamadoGenericoPolimorfico() {
         Chamado c1 = ChamadoFactory.criarChamado(
                 TipoChamado.INCIDENTE,
-                "Servidor MySQL parou",
-                "Crash no processo mysqld",
-                "SysAdmin",
-                Setor.TI,
-                Categoria.SOFTWARE,
-                Prioridade.ALTA,
-                true,
-                "Cluster Produção"
-        );
-        assertTrue(c1 instanceof Incidente);
-        assertEquals(TipoChamado.INCIDENTE, c1.getTipo());
+                "Servidor MySQL parou", "Crash no processo mysqld", "SysAdmin",
+                Setor.TI, Categoria.SOFTWARE, true, "Cluster Produção");
+        c1.classificarPrioridade(Prioridade.ALTA);
 
         Chamado c2 = ChamadoFactory.criarChamado(
                 TipoChamado.REQUISICAO,
-                "Mouse sem fio",
-                "Substituição de equipamento com defeito",
-                "Mariana",
-                Setor.RH,
-                Categoria.HARDWARE,
-                Prioridade.BAIXA,
-                false,
-                "Substituição simples"
-        );
+                "Mouse sem fio", "Substituição de equipamento com defeito", "Mariana",
+                Setor.RH, Categoria.HARDWARE, false, "Substituição simples");
+        c2.classificarPrioridade(Prioridade.BAIXA);
+
+        assertTrue(c1 instanceof Incidente);
+        assertEquals(TipoChamado.INCIDENTE, c1.getTipo());
+
         assertTrue(c2 instanceof Requisicao);
         assertEquals(TipoChamado.REQUISICAO, c2.getTipo());
     }
@@ -102,7 +81,7 @@ class ChamadoFactoryTest {
     void deveLancarExcecaoQuandoTipoNulo() {
         assertThrows(DadosChamadoInvalidosException.class, () ->
                 ChamadoFactory.criarChamado(null, "Titulo", "Desc", "Sol",
-                        Setor.TI, Categoria.HARDWARE, Prioridade.BAIXA, false, "Geral"));
+                        Setor.TI, Categoria.HARDWARE, false, "Geral"));
     }
 
     @Test

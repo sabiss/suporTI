@@ -19,28 +19,27 @@ public class Incidente extends Chamado {
     private String ambienteAfetado;
 
     /**
-     * Construtor completo para Incidente.
+     * Construtor completo para Incidente sem prioridade.
+     * A prioridade deve ser definida posteriormente pelo método classificarPrioridade.
      */
     public Incidente(Long id, String titulo, String descricao, String solicitante,
-                     Setor setor, Categoria categoria, Prioridade prioridade,
+                     Setor setor, Categoria categoria,
                      StatusChamado status, LocalDateTime dataAbertura,
                      boolean sistemaIndisponivel, String ambienteAfetado) {
-        super(id, titulo, descricao, solicitante, setor, categoria, prioridade, status, dataAbertura);
+        super(id, titulo, descricao, solicitante, setor, categoria, status, dataAbertura);
         this.sistemaIndisponivel = sistemaIndisponivel;
-        this.ambienteAfetado = ambienteAfetado != null && !ambienteAfetado.trim().isEmpty() 
-                ? ambienteAfetado.trim() 
+        this.ambienteAfetado = ambienteAfetado != null && !ambienteAfetado.trim().isEmpty()
+                ? ambienteAfetado.trim()
                 : "Geral";
-        // Recalcula o prazo limite considerando a flag sistemaIndisponivel
-        this.setPrazoLimite(calcularPrazoLimite(this.getDataAbertura()));
     }
 
     /**
-     * Construtor simplificado para novos incidentes.
+     * Construtor simplificado para novos incidentes sem prioridade.
      */
     public Incidente(String titulo, String descricao, String solicitante,
-                     Setor setor, Categoria categoria, Prioridade prioridade,
+                     Setor setor, Categoria categoria,
                      boolean sistemaIndisponivel, String ambienteAfetado) {
-        this(null, titulo, descricao, solicitante, setor, categoria, prioridade,
+        this(null, titulo, descricao, solicitante, setor, categoria,
                 StatusChamado.ABERTO, LocalDateTime.now(), sistemaIndisponivel, ambienteAfetado);
     }
 
@@ -55,6 +54,9 @@ public class Incidente extends Chamado {
 
     @Override
     public int getTempoMaximoResolucaoHoras() {
+        if (getPrioridade() == null) {
+            return 0;
+        }
         if (getPrioridade() == Prioridade.ALTA) {
             return sistemaIndisponivel ? 2 : 4;
         } else if (getPrioridade() == Prioridade.MEDIA) {
@@ -66,6 +68,9 @@ public class Incidente extends Chamado {
 
     @Override
     public LocalDateTime calcularPrazoLimite(LocalDateTime dataReferencia) {
+        if (getPrioridade() == null) {
+            return null;
+        }
         LocalDateTime base = dataReferencia != null ? dataReferencia : LocalDateTime.now();
         return base.plusHours(getTempoMaximoResolucaoHoras());
     }
@@ -77,6 +82,9 @@ public class Incidente extends Chamado {
 
     @Override
     public String obterDescricaoSla() {
+        if (getPrioridade() == null) {
+            return "Incidente [SEM PRIORIDADE] - Aguardando triagem";
+        }
         return String.format("Incidente [%s] - Prazo máximo: %d horas (Indisponibilidade Crítica: %s)",
                 getPrioridade().getDescricao(),
                 getTempoMaximoResolucaoHoras(),

@@ -21,27 +21,26 @@ public class Requisicao extends Chamado {
     private Boolean aprovado; // null = pendente, true = aprovado, false = rejeitado
 
     /**
-     * Construtor completo para Requisição.
+     * Construtor completo para Requisição sem prioridade.
+     * A prioridade deve ser definida posteriormente pelo método classificarPrioridade.
      */
     public Requisicao(Long id, String titulo, String descricao, String solicitante,
-                      Setor setor, Categoria categoria, Prioridade prioridade,
+                      Setor setor, Categoria categoria,
                       StatusChamado status, LocalDateTime dataAbertura,
                       String justificativaNegocio, boolean precisaAprovacao, Boolean aprovado) {
-        super(id, titulo, descricao, solicitante, setor, categoria, prioridade, status, dataAbertura);
+        super(id, titulo, descricao, solicitante, setor, categoria, status, dataAbertura);
         this.justificativaNegocio = justificativaNegocio != null ? justificativaNegocio.trim() : "";
         this.precisaAprovacao = precisaAprovacao;
         this.aprovado = aprovado;
-        // Ajusta prazo limite considerando a necessidade de aprovação
-        this.setPrazoLimite(calcularPrazoLimite(this.getDataAbertura()));
     }
 
     /**
-     * Construtor simplificado para novas requisições.
+     * Construtor simplificado para novas requisições sem prioridade.
      */
     public Requisicao(String titulo, String descricao, String solicitante,
-                      Setor setor, Categoria categoria, Prioridade prioridade,
+                      Setor setor, Categoria categoria,
                       String justificativaNegocio, boolean precisaAprovacao) {
-        this(null, titulo, descricao, solicitante, setor, categoria, prioridade,
+        this(null, titulo, descricao, solicitante, setor, categoria,
                 StatusChamado.ABERTO, LocalDateTime.now(),
                 justificativaNegocio, precisaAprovacao, precisaAprovacao ? null : Boolean.TRUE);
     }
@@ -57,6 +56,9 @@ public class Requisicao extends Chamado {
 
     @Override
     public int getTempoMaximoResolucaoHoras() {
+        if (getPrioridade() == null) {
+            return 0;
+        }
         int horasBase;
         if (getPrioridade() == Prioridade.ALTA) {
             horasBase = 24; // 1 dia
@@ -76,6 +78,9 @@ public class Requisicao extends Chamado {
 
     @Override
     public LocalDateTime calcularPrazoLimite(LocalDateTime dataReferencia) {
+        if (getPrioridade() == null) {
+            return null;
+        }
         LocalDateTime base = dataReferencia != null ? dataReferencia : LocalDateTime.now();
         return base.plusHours(getTempoMaximoResolucaoHoras());
     }
@@ -88,6 +93,9 @@ public class Requisicao extends Chamado {
 
     @Override
     public String obterDescricaoSla() {
+        if (getPrioridade() == null) {
+            return "Requisição [SEM PRIORIDADE] - Aguardando triagem";
+        }
         return String.format("Requisição [%s] - Prazo máximo: %d horas (Requer Aprovação: %s)",
                 getPrioridade().getDescricao(),
                 getTempoMaximoResolucaoHoras(),

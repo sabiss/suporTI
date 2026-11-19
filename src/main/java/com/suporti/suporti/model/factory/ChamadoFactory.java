@@ -27,9 +27,9 @@ public class ChamadoFactory {
      * Cria uma nova instância de Incidente com validações e prazos iniciais configurados.
      */
     public static Incidente criarIncidente(String titulo, String descricao, String solicitante,
-                                          Setor setor, Categoria categoria, Prioridade prioridade,
+                                          Setor setor, Categoria categoria,
                                           boolean sistemaIndisponivel, String ambienteAfetado) {
-        return new Incidente(titulo, descricao, solicitante, setor, categoria, prioridade,
+        return new Incidente(titulo, descricao, solicitante, setor, categoria,
                 sistemaIndisponivel, ambienteAfetado);
     }
 
@@ -37,9 +37,9 @@ public class ChamadoFactory {
      * Cria uma nova instância de Requisição com validações e prazos iniciais configurados.
      */
     public static Requisicao criarRequisicao(String titulo, String descricao, String solicitante,
-                                            Setor setor, Categoria categoria, Prioridade prioridade,
+                                            Setor setor, Categoria categoria,
                                             String justificativaNegocio, boolean precisaAprovacao) {
-        return new Requisicao(titulo, descricao, solicitante, setor, categoria, prioridade,
+        return new Requisicao(titulo, descricao, solicitante, setor, categoria,
                 justificativaNegocio, precisaAprovacao);
     }
 
@@ -48,7 +48,7 @@ public class ChamadoFactory {
      * Útil para controllers e formulários web dinâmicos.
      */
     public static Chamado criarChamado(TipoChamado tipo, String titulo, String descricao, String solicitante,
-                                       Setor setor, Categoria categoria, Prioridade prioridade,
+                                       Setor setor, Categoria categoria,
                                        boolean flagEspecifica, String detalheEspecifico) {
         if (tipo == null) {
             throw new DadosChamadoInvalidosException("tipo", "O tipo de chamado deve ser informado (Incidente ou Requisição).");
@@ -56,10 +56,10 @@ public class ChamadoFactory {
 
         switch (tipo) {
             case INCIDENTE:
-                return criarIncidente(titulo, descricao, solicitante, setor, categoria, prioridade,
+                return criarIncidente(titulo, descricao, solicitante, setor, categoria,
                         flagEspecifica, detalheEspecifico);
             case REQUISICAO:
-                return criarRequisicao(titulo, descricao, solicitante, setor, categoria, prioridade,
+                return criarRequisicao(titulo, descricao, solicitante, setor, categoria,
                         detalheEspecifico, flagEspecifica);
             default:
                 throw new DadosChamadoInvalidosException("tipo", "Tipo de chamado não suportado: " + tipo);
@@ -81,11 +81,15 @@ public class ChamadoFactory {
 
         Chamado chamado;
         if (tipo == TipoChamado.INCIDENTE) {
-            chamado = new Incidente(id, titulo, descricao, solicitante, setor, categoria, prioridade,
+            chamado = new Incidente(id, titulo, descricao, solicitante, setor, categoria,
                     status, dataAbertura, flagEspecifica, detalheEspecifico);
         } else {
-            chamado = new Requisicao(id, titulo, descricao, solicitante, setor, categoria, prioridade,
+            chamado = new Requisicao(id, titulo, descricao, solicitante, setor, categoria,
                     status, dataAbertura, detalheEspecifico, flagEspecifica, aprovado);
+        }
+
+        if (prioridade != null) {
+            chamado.classificarPrioridade(prioridade);
         }
 
         if (prazoLimite != null) {

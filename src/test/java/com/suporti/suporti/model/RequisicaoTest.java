@@ -23,10 +23,11 @@ class RequisicaoTest {
                 "Mariana",
                 Setor.TI,
                 Categoria.ACESSO_E_PERMISSAO,
-                Prioridade.ALTA,
                 "Plantão do final de semana",
                 false
         );
+        reqAlta.classificarPrioridade(Prioridade.ALTA);
+
         assertEquals(TipoChamado.REQUISICAO, reqAlta.getTipo());
         assertEquals(24, reqAlta.getTempoMaximoResolucaoHoras());
         assertFalse(reqAlta.requerAtendimentoImediato());
@@ -37,10 +38,10 @@ class RequisicaoTest {
                 "Paula",
                 Setor.TI,
                 Categoria.SOFTWARE,
-                Prioridade.MEDIA,
                 "Nova estagiária",
                 false
         );
+        reqMedia.classificarPrioridade(Prioridade.MEDIA);
         assertEquals(48, reqMedia.getTempoMaximoResolucaoHoras());
 
         Requisicao reqBaixa = new Requisicao(
@@ -49,10 +50,10 @@ class RequisicaoTest {
                 "Fernanda",
                 Setor.RH,
                 Categoria.HARDWARE,
-                Prioridade.BAIXA,
                 "Melhoria de posto de trabalho",
                 false
         );
+        reqBaixa.classificarPrioridade(Prioridade.BAIXA);
         assertEquals(72, reqBaixa.getTempoMaximoResolucaoHoras());
     }
 
@@ -60,15 +61,10 @@ class RequisicaoTest {
     @DisplayName("Deve adicionar 24 horas ao SLA quando a requisição necessita de aprovação prévia pendente")
     void deveAdicionarPrazoQuandoNecessitaAprovacao() {
         Requisicao reqPendente = new Requisicao(
-                "Compra de Notebook Dell",
-                "Upgrade de máquina para analista sênior",
-                "Diretor Financeiro",
-                Setor.FINANCEIRO,
-                Categoria.HARDWARE,
-                Prioridade.ALTA, // 24h base + 24h aprovação = 48h
-                "Renovação de parque",
-                true
-        );
+                "Compra de Notebook Dell", "Upgrade de máquina para analista sênior",
+                "Diretor Financeiro", Setor.FINANCEIRO, Categoria.HARDWARE,
+                "Renovação de parque", true);
+        reqPendente.classificarPrioridade(Prioridade.ALTA);
 
         assertEquals(48, reqPendente.getTempoMaximoResolucaoHoras());
         assertNull(reqPendente.getAprovado()); // Pendente
@@ -83,15 +79,9 @@ class RequisicaoTest {
     @DisplayName("Deve impedir atendimento de requisição pendente de aprovação")
     void deveImpedirAtendimentoSemAprovacao() {
         Requisicao req = new Requisicao(
-                "Acesso a dados confidenciais do RH",
-                "Acesso a folha de pagamento",
-                "Estagiário",
-                Setor.RH,
-                Categoria.ACESSO_E_PERMISSAO,
-                Prioridade.MEDIA,
-                "Auditoria externa",
-                true
-        );
+                "Acesso a dados confidenciais do RH", "Acesso a folha de pagamento", "Estagiário",
+                Setor.RH, Categoria.ACESSO_E_PERMISSAO, "Auditoria externa", true);
+        req.classificarPrioridade(Prioridade.MEDIA);
 
         // Tenta iniciar sem aprovação
         TransicaoStatusInvalidaException ex = assertThrows(TransicaoStatusInvalidaException.class, 
@@ -108,15 +98,9 @@ class RequisicaoTest {
     @DisplayName("Deve cancelar automaticamente a requisição quando ela for rejeitada")
     void deveCancelarRequisicaoQuandoRejeitada() {
         Requisicao req = new Requisicao(
-                "Licença Adobe Photoshop",
-                "Uso para edição pessoal de fotos",
-                "João",
-                Setor.OPERACIONAL,
-                Categoria.SOFTWARE,
-                Prioridade.BAIXA,
-                "Uso pessoal",
-                true
-        );
+                "Licença Adobe Photoshop", "Uso para edição pessoal de fotos", "João",
+                Setor.OPERACIONAL, Categoria.SOFTWARE, "Uso pessoal", true);
+        req.classificarPrioridade(Prioridade.BAIXA);
 
         req.rejeitar("Software não condizente com as funções do cargo.");
 

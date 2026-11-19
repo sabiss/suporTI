@@ -21,8 +21,10 @@ class FiltroTest {
     // ---------- Ajudantes para criar chamados de exemplo ----------
 
     private Chamado incidente(String titulo, Setor setor, Prioridade prioridade) {
-        return ChamadoFactory.criarIncidente(titulo, "Descrição de teste", "Teste",
-                setor, Categoria.HARDWARE, prioridade, false, "Ambiente de teste");
+        Chamado chamado = ChamadoFactory.criarIncidente(titulo, "Descrição de teste", "Teste",
+                setor, Categoria.HARDWARE, false, "Ambiente de teste");
+        chamado.classificarPrioridade(prioridade);
+        return chamado;
     }
 
     private Chamado comPrazo(Chamado chamado, LocalDateTime prazo) {

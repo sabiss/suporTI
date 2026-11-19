@@ -22,17 +22,23 @@ class FilaChamadosPolimorfismoTest {
     void deveManipularSlaPolimorficamente() {
         List<SlaCalculavel> itensComSla = new ArrayList<>();
 
-        itensComSla.add(ChamadoFactory.criarIncidente(
+        Chamado incidenteAlta = ChamadoFactory.criarIncidente(
                 "Falha no Gateway de Pagamento", "API de pagamentos fora", "Financeiro",
-                Setor.FINANCEIRO, Categoria.SOFTWARE, Prioridade.ALTA, true, "Produção"));
+                Setor.FINANCEIRO, Categoria.SOFTWARE, true, "Produção");
+        incidenteAlta.classificarPrioridade(Prioridade.ALTA);
+        itensComSla.add(incidenteAlta);
 
-        itensComSla.add(ChamadoFactory.criarRequisicao(
+        Chamado requisicaoBaixa = ChamadoFactory.criarRequisicao(
                 "Instalação de Antivírus", "Atualizar endpoints", "Segurança",
-                Setor.TI, Categoria.SOFTWARE, Prioridade.BAIXA, "Compliance", false));
+                Setor.TI, Categoria.SOFTWARE, "Compliance", false);
+        requisicaoBaixa.classificarPrioridade(Prioridade.BAIXA);
+        itensComSla.add(requisicaoBaixa);
 
-        itensComSla.add(ChamadoFactory.criarIncidente(
+        Chamado incidenteBaixo = ChamadoFactory.criarIncidente(
                 "Mouse com falha no scroll", "Scroll travando", "Colaborador",
-                Setor.RH, Categoria.HARDWARE, Prioridade.BAIXA, false, "Escritório"));
+                Setor.RH, Categoria.HARDWARE, false, "Escritório");
+        incidenteBaixo.classificarPrioridade(Prioridade.BAIXA);
+        itensComSla.add(incidenteBaixo);
 
         // Verificação polimórfica: sem saber se é Incidente ou Requisição em tempo de compilação
         int totalHoras = 0;
@@ -59,19 +65,23 @@ class FilaChamadosPolimorfismoTest {
     void deveOrdenarFilaPorPrioridadeEPrazo() {
         Chamado chamadoBaixa = ChamadoFactory.criarRequisicao(
                 "Cadeira nova", "Troca ergonômica", "Ana",
-                Setor.RH, Categoria.HARDWARE, Prioridade.BAIXA, "Ergonomia", false);
+                Setor.RH, Categoria.HARDWARE, "Ergonomia", false);
+        chamadoBaixa.classificarPrioridade(Prioridade.BAIXA);
 
         Chamado chamadoMedia = ChamadoFactory.criarIncidente(
                 "Impressora lenta", "Demora na impressão", "Beto",
-                Setor.VENDAS, Categoria.HARDWARE, Prioridade.MEDIA, false, "Loja");
+                Setor.VENDAS, Categoria.HARDWARE, false, "Loja");
+        chamadoMedia.classificarPrioridade(Prioridade.MEDIA);
 
         Chamado chamadoAltaCritica = ChamadoFactory.criarIncidente(
                 "Servidor de autenticação caiu", "Ninguém consegue logar", "Carlos",
-                Setor.TI, Categoria.SOFTWARE, Prioridade.ALTA, true, "Produção");
+                Setor.TI, Categoria.SOFTWARE, true, "Produção");
+        chamadoAltaCritica.classificarPrioridade(Prioridade.ALTA);
 
         Chamado chamadoAltaNormal = ChamadoFactory.criarRequisicao(
                 "Liberar acesso a cliente VIP", "Acesso urgente", "Diretor",
-                Setor.DIRETORIA, Categoria.ACESSO_E_PERMISSAO, Prioridade.ALTA, "Urgência cliente", false);
+                Setor.DIRETORIA, Categoria.ACESSO_E_PERMISSAO, "Urgência cliente", false);
+        chamadoAltaNormal.classificarPrioridade(Prioridade.ALTA);
 
         List<Chamado> fila = new ArrayList<>();
         fila.add(chamadoBaixa);
@@ -97,9 +107,12 @@ class FilaChamadosPolimorfismoTest {
     void deveFuncionarComPriorityQueue() {
         PriorityQueue<Chamado> queue = new PriorityQueue<>();
 
-        Chamado c1 = ChamadoFactory.criarRequisicao("Item 1", "desc", "u1", Setor.TI, Categoria.HARDWARE, Prioridade.BAIXA, "just", false);
-        Chamado c2 = ChamadoFactory.criarIncidente("Item 2", "desc", "u2", Setor.TI, Categoria.SOFTWARE, Prioridade.ALTA, true, "Prod");
-        Chamado c3 = ChamadoFactory.criarIncidente("Item 3", "desc", "u3", Setor.TI, Categoria.REDE, Prioridade.MEDIA, false, "Geral");
+        Chamado c1 = ChamadoFactory.criarRequisicao("Item 1", "desc", "u1", Setor.TI, Categoria.HARDWARE, "just", false);
+        c1.classificarPrioridade(Prioridade.BAIXA);
+        Chamado c2 = ChamadoFactory.criarIncidente("Item 2", "desc", "u2", Setor.TI, Categoria.SOFTWARE, true, "Prod");
+        c2.classificarPrioridade(Prioridade.ALTA);
+        Chamado c3 = ChamadoFactory.criarIncidente("Item 3", "desc", "u3", Setor.TI, Categoria.REDE, false, "Geral");
+        c3.classificarPrioridade(Prioridade.MEDIA);
 
         queue.add(c1);
         queue.add(c2);
