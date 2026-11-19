@@ -17,16 +17,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class ChamadoCicloDeVidaTest {
 
     private Incidente criarIncidenteExemplo() {
-        return new Incidente(
+        Incidente incidente = new Incidente(
                 "Falha na rede do 2º andar",
                 "Switches sem conexão e sem acesso à internet",
                 "Lucas Silva",
                 Setor.OPERACIONAL,
                 Categoria.REDE,
-                Prioridade.ALTA,
                 true,
                 "Produção"
         );
+        incidente.classificarPrioridade(Prioridade.ALTA);
+        return incidente;
     }
 
     @Test
@@ -108,23 +109,20 @@ class ChamadoCicloDeVidaTest {
     @Test
     @DisplayName("Deve validar campos obrigatórios na instanciação e lançar exceção apropriada")
     void deveValidarCamposObrigatorios() {
-        assertThrows(DadosChamadoInvalidosException.class, () -> 
-                new Incidente("", "desc", "solic", Setor.TI, Categoria.HARDWARE, Prioridade.BAIXA, false, "Geral"));
+        assertThrows(DadosChamadoInvalidosException.class, () ->
+                new Incidente("", "desc", "solic", Setor.TI, Categoria.HARDWARE, false, "Geral"));
 
-        assertThrows(DadosChamadoInvalidosException.class, () -> 
-                new Incidente("Titulo", "", "solic", Setor.TI, Categoria.HARDWARE, Prioridade.BAIXA, false, "Geral"));
+        assertThrows(DadosChamadoInvalidosException.class, () ->
+                new Incidente("Titulo", "", "solic", Setor.TI, Categoria.HARDWARE, false, "Geral"));
 
-        assertThrows(DadosChamadoInvalidosException.class, () -> 
-                new Incidente("Titulo", "desc", null, Setor.TI, Categoria.HARDWARE, Prioridade.BAIXA, false, "Geral"));
+        assertThrows(DadosChamadoInvalidosException.class, () ->
+                new Incidente("Titulo", "desc", null, Setor.TI, Categoria.HARDWARE, false, "Geral"));
 
-        assertThrows(DadosChamadoInvalidosException.class, () -> 
-                new Incidente("Titulo", "desc", "solic", null, Categoria.HARDWARE, Prioridade.BAIXA, false, "Geral"));
+        assertThrows(DadosChamadoInvalidosException.class, () ->
+                new Incidente("Titulo", "desc", "solic", null, Categoria.HARDWARE, false, "Geral"));
 
-        assertThrows(DadosChamadoInvalidosException.class, () -> 
-                new Incidente("Titulo", "desc", "solic", Setor.TI, null, Prioridade.BAIXA, false, "Geral"));
-
-        assertThrows(DadosChamadoInvalidosException.class, () -> 
-                new Incidente("Titulo", "desc", "solic", Setor.TI, Categoria.HARDWARE, null, false, "Geral"));
+        assertThrows(DadosChamadoInvalidosException.class, () ->
+                new Incidente("Titulo", "desc", "solic", Setor.TI, null, false, "Geral"));
     }
 
     @Test
@@ -136,10 +134,10 @@ class ChamadoCicloDeVidaTest {
                 "Joana",
                 Setor.RH,
                 Categoria.HARDWARE,
-                Prioridade.BAIXA, // SLA inicial BAIXA = 24h
                 false,
                 "Escritório"
         );
+        incidente.classificarPrioridade(Prioridade.BAIXA);
 
         LocalDateTime prazoInicial = incidente.getPrazoLimite();
 

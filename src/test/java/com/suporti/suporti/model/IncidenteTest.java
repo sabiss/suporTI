@@ -23,10 +23,10 @@ class IncidenteTest {
                 "Carlos",
                 Setor.TI,
                 Categoria.SOFTWARE,
-                Prioridade.ALTA,
                 true,
                 "Produção"
         );
+        inc.classificarPrioridade(Prioridade.ALTA);
 
         assertEquals(TipoChamado.INCIDENTE, inc.getTipo());
         assertEquals(2, inc.getTempoMaximoResolucaoHoras());
@@ -44,10 +44,10 @@ class IncidenteTest {
                 "Beatriz",
                 Setor.FINANCEIRO,
                 Categoria.SOFTWARE,
-                Prioridade.ALTA,
                 false,
                 "Produção"
         );
+        inc.classificarPrioridade(Prioridade.ALTA);
 
         assertEquals(4, inc.getTempoMaximoResolucaoHoras());
         assertTrue(inc.requerAtendimentoImediato()); // ALTA sempre requer atendimento imediato
@@ -62,10 +62,10 @@ class IncidenteTest {
                 "Renata",
                 Setor.RH,
                 Categoria.HARDWARE,
-                Prioridade.MEDIA,
                 false,
                 "Escritório"
         );
+        inc.classificarPrioridade(Prioridade.MEDIA);
 
         assertEquals(8, inc.getTempoMaximoResolucaoHoras());
         assertFalse(inc.requerAtendimentoImediato());
@@ -80,10 +80,10 @@ class IncidenteTest {
                 "Marcos",
                 Setor.VENDAS,
                 Categoria.HARDWARE,
-                Prioridade.BAIXA,
                 false,
                 "Escritório"
         );
+        inc.classificarPrioridade(Prioridade.BAIXA);
 
         assertEquals(24, inc.getTempoMaximoResolucaoHoras());
         assertFalse(inc.requerAtendimentoImediato());
@@ -98,10 +98,10 @@ class IncidenteTest {
                 "Admin",
                 Setor.TI,
                 Categoria.SOFTWARE,
-                Prioridade.ALTA,
-                false, // 4 horas
+                false,
                 "Produção"
         );
+        inc.classificarPrioridade(Prioridade.ALTA);
 
         LocalDateTime prazoSemQueda = inc.getPrazoLimite();
 

@@ -34,9 +34,9 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
      * Construtor protegido para instanciação através de subclasses ou Factory.
      */
     protected Chamado(Long id, String titulo, String descricao, String solicitante,
-                      Setor setor, Categoria categoria, Prioridade prioridade,
-                      StatusChamado status, LocalDateTime dataAbertura) {
-        validarCamposObrigatorios(titulo, descricao, solicitante, setor, categoria, prioridade);
+                      Setor setor, Categoria categoria, StatusChamado status,
+                      LocalDateTime dataAbertura) {
+        validarCamposObrigatorios(titulo, descricao, solicitante, setor, categoria);
 
         this.id = id;
         this.titulo = titulo.trim();
@@ -44,17 +44,17 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
         this.solicitante = solicitante.trim();
         this.setor = setor;
         this.categoria = categoria;
-        this.prioridade = prioridade;
+        this.prioridade = null;
         this.status = status != null ? status : StatusChamado.ABERTO;
         this.dataAbertura = dataAbertura != null ? dataAbertura : LocalDateTime.now();
-        this.prazoLimite = calcularPrazoLimite(this.dataAbertura);
+        this.prazoLimite = null;
     }
 
     /**
      * Validação dos dados essenciais do chamado garantindo a integridade do domínio.
      */
     private void validarCamposObrigatorios(String titulo, String descricao, String solicitante,
-                                           Setor setor, Categoria categoria, Prioridade prioridade) {
+                                           Setor setor, Categoria categoria) {
         if (titulo == null || titulo.trim().isEmpty()) {
             throw new DadosChamadoInvalidosException("titulo", "O título do chamado não pode ser nulo ou vazio.");
         }
@@ -69,9 +69,6 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
         }
         if (categoria == null) {
             throw new DadosChamadoInvalidosException("categoria", "A categoria é obrigatória.");
-        }
-        if (prioridade == null) {
-            throw new DadosChamadoInvalidosException("prioridade", "A prioridade deve ser informada.");
         }
     }
 
@@ -161,6 +158,20 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
         if (outro == null) {
             return -1;
         }
+        // Chamados sem prioridade ficam na triagem e devem aparecer após os classificados
+        if (this.prioridade == null && outro.prioridade != null) {
+            return 1;
+        }
+        if (this.prioridade != null && outro.prioridade == null) {
+            return -1;
+        }
+        if (this.prioridade == null && outro.prioridade == null) {
+            if (this.dataAbertura != null && outro.dataAbertura != null) {
+                return this.dataAbertura.compareTo(outro.dataAbertura);
+            }
+            return 0;
+        }
+
         // Compara nível de prioridade (descendente: maior nível primeiro)
         int compPrioridade = Integer.compare(outro.getPrioridade().getNivel(), this.getPrioridade().getNivel());
         if (compPrioridade != 0) {
