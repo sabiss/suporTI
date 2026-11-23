@@ -1,9 +1,12 @@
 package com.suporti.suporti.service.filtro;
 
 import com.suporti.suporti.model.Chamado;
+import com.suporti.suporti.model.Incidente;
+import com.suporti.suporti.model.Requisicao;
 import com.suporti.suporti.model.enums.Categoria;
 import com.suporti.suporti.model.enums.Prioridade;
 import com.suporti.suporti.model.enums.Setor;
+import com.suporti.suporti.model.enums.StatusChamado;
 import com.suporti.suporti.model.factory.ChamadoFactory;
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +33,16 @@ class FiltroTest {
     private Chamado comPrazo(Chamado chamado, LocalDateTime prazo) {
         chamado.setPrazoLimite(prazo);
         return chamado;
+    }
+
+    private Chamado incidenteSemPrioridade(String titulo, LocalDateTime abertura) {
+        return new Incidente(null, titulo, "Descrição de teste", "Teste", Setor.TI,
+                Categoria.REDE, StatusChamado.ABERTO, abertura, false, "Ambiente de teste");
+    }
+
+    private Chamado requisicaoSemPrioridade(String titulo, LocalDateTime abertura) {
+        return new Requisicao(null, titulo, "Descrição de teste", "Teste", Setor.TI,
+                Categoria.SOFTWARE, StatusChamado.ABERTO, abertura, "Justificativa", false, true);
     }
 
     // ---------- FiltroPorSetor ----------
@@ -105,8 +118,39 @@ class FiltroTest {
         assertTrue(resultado.isEmpty());
     }
 
-    // Pendentes até o Chamado poder nascer sem prioridade:
-    // - chamado aberto sem prioridade aparece na triagem;
-    // - incidentes vêm antes de requisições;
-    // - o mais antigo vem primeiro.
+    @Test
+    void triagemMostraSoChamadosAbertosSemPrioridade() {
+        Chamado semPrioridade = incidenteSemPrioridade("Novo", LocalDateTime.of(2026, 11, 20, 9, 0));
+        Chamado comPrioridade = incidente("Já triado", Setor.TI, Prioridade.MEDIA);
+        Chamado cancelado = incidenteSemPrioridade("Cancelado", LocalDateTime.of(2026, 11, 20, 8, 0));
+        cancelado.cancelar("Aberto por engano");
+
+        List<Chamado> resultado = new FiltroAguardandoTriagem()
+                .aplicar(List.of(semPrioridade, comPrioridade, cancelado));
+
+        assertEquals(List.of(semPrioridade), resultado);
+    }
+
+    @Test
+    void triagemColocaIncidentesAntesDeRequisicoes() {
+        // A requisição é mais antiga, mas o incidente vem primeiro
+        Chamado requisicao = requisicaoSemPrioridade("Instalar Excel", LocalDateTime.of(2026, 11, 18, 9, 0));
+        Chamado incidente = incidenteSemPrioridade("Sem internet", LocalDateTime.of(2026, 11, 20, 9, 0));
+
+        List<Chamado> resultado = new FiltroAguardandoTriagem()
+                .aplicar(List.of(requisicao, incidente));
+
+        assertEquals(List.of(incidente, requisicao), resultado);
+    }
+
+    @Test
+    void triagemMostraOMaisAntigoPrimeiro() {
+        Chamado maisNovo = incidenteSemPrioridade("Mais novo", LocalDateTime.of(2026, 11, 20, 15, 0));
+        Chamado maisAntigo = incidenteSemPrioridade("Mais antigo", LocalDateTime.of(2026, 11, 19, 10, 0));
+
+        List<Chamado> resultado = new FiltroAguardandoTriagem()
+                .aplicar(List.of(maisNovo, maisAntigo));
+
+        assertEquals(List.of(maisAntigo, maisNovo), resultado);
+    }
 }
