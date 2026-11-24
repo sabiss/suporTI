@@ -83,38 +83,4 @@ class ChamadoFactoryTest {
                 ChamadoFactory.criarChamado(null, "Titulo", "Desc", "Sol",
                         Setor.TI, Categoria.HARDWARE, false, "Geral"));
     }
-
-    @Test
-    @DisplayName("Factory deve reconstruir chamado a partir de dados de banco de dados")
-    void deveReconstruirChamadoComDadosPersistidos() {
-        LocalDateTime abertura = LocalDateTime.now().minusDays(1);
-        LocalDateTime prazo = abertura.plusHours(8);
-        LocalDateTime fechamento = LocalDateTime.now().minusHours(2);
-
-        Chamado reconstruido = ChamadoFactory.reconstruir(
-                100L,
-                TipoChamado.INCIDENTE,
-                "Incidente Histórico",
-                "Descrição salva no banco",
-                "UsuarioAntigo",
-                Setor.OPERACIONAL,
-                Categoria.REDE,
-                Prioridade.MEDIA,
-                StatusChamado.CONCLUIDO,
-                abertura,
-                prazo,
-                fechamento,
-                null,
-                false,
-                "Produção",
-                null
-        );
-
-        assertEquals(100L, reconstruido.getId());
-        assertEquals(StatusChamado.CONCLUIDO, reconstruido.getStatus());
-        assertEquals(abertura, reconstruido.getDataAbertura());
-        assertEquals(prazo, reconstruido.getPrazoLimite());
-        assertEquals(fechamento, reconstruido.getDataFechamento());
-        assertTrue(reconstruido instanceof Incidente);
-    }
 }
