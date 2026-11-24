@@ -5,6 +5,7 @@ import com.suporti.suporti.model.Incidente;
 import com.suporti.suporti.model.Requisicao;
 import com.suporti.suporti.model.enums.Categoria;
 import com.suporti.suporti.model.enums.Prioridade;
+import com.suporti.suporti.model.enums.StatusChamado;
 import com.suporti.suporti.model.enums.Setor;
 import com.suporti.suporti.model.enums.TipoChamado;
 import com.suporti.suporti.model.exception.DadosChamadoInvalidosException;
@@ -67,11 +68,15 @@ public class ChamadoFactory {
     }
 
     /**
-     * Reconstrói uma instância de Chamado a partir de dados persistidos (útil para o Repository/JdbcTemplate).
+     * Reconstrói uma instância de Chamado a partir de dados persistidos (usado pelo ChamadoRepository).
+     *
+     * O chamado é recriado refazendo a sua "história": nasce ABERTO, recebe a prioridade
+     * e depois é levado até o status salvo pelos próprios métodos do domínio.
+     * Assim a regra "não alterar prioridade de chamado finalizado" não bloqueia a leitura.
      */
     public static Chamado reconstruir(Long id, TipoChamado tipo, String titulo, String descricao,
                                       String solicitante, Setor setor, Categoria categoria,
-                                      Prioridade prioridade, com.suporti.suporti.model.enums.StatusChamado status,
+                                      Prioridade prioridade, StatusChamado status,
                                       LocalDateTime dataAbertura, LocalDateTime prazoLimite,
                                       LocalDateTime dataFechamento, String motivoCancelamento,
                                       boolean flagEspecifica, String detalheEspecifico, Boolean aprovado) {
@@ -79,35 +84,39 @@ public class ChamadoFactory {
             throw new DadosChamadoInvalidosException("tipo", "Tipo de chamado nulo ao reconstruir objeto.");
         }
 
+        // 1. Recria o chamado como ABERTO, que é o estado em que todo chamado nasce
         Chamado chamado;
         if (tipo == TipoChamado.INCIDENTE) {
             chamado = new Incidente(id, titulo, descricao, solicitante, setor, categoria,
-                    status, dataAbertura, flagEspecifica, detalheEspecifico);
+                    StatusChamado.ABERTO, dataAbertura, flagEspecifica, detalheEspecifico);
         } else {
             chamado = new Requisicao(id, titulo, descricao, solicitante, setor, categoria,
-                    status, dataAbertura, detalheEspecifico, flagEspecifica, aprovado);
+                    StatusChamado.ABERTO, dataAbertura, detalheEspecifico, flagEspecifica, aprovado);
         }
 
+        // 2. Refaz a triagem enquanto o chamado ainda está aberto
         if (prioridade != null) {
             chamado.classificarPrioridade(prioridade);
         }
 
+        // 3. Leva o chamado até o status salvo usando as próprias regras do domínio
+        if (status == StatusChamado.EM_ANDAMENTO) {
+            chamado.iniciarAtendimento();
+        } else if (status == StatusChamado.CONCLUIDO) {
+            chamado.concluir();
+        } else if (status == StatusChamado.CANCELADO) {
+            chamado.cancelar(motivoCancelamento != null ? motivoCancelamento : "Motivo não registrado");
+        }
+
+        // 4. Restaura as datas exatamente como estavam no banco
         if (prazoLimite != null) {
             chamado.setPrazoLimite(prazoLimite);
         }
         if (dataFechamento != null) {
             chamado.setDataFechamento(dataFechamento);
         }
-        if (motivoCancelamento != null) {
-            try {
-                // Se foi cancelado, mantém o motivo
-                java.lang.reflect.Field field = Chamado.class.getDeclaredField("motivoCancelamento");
-                field.setAccessible(true);
-                field.set(chamado, motivoCancelamento);
-            } catch (Exception ignored) {
-            }
-        }
 
         return chamado;
     }
+
 }
