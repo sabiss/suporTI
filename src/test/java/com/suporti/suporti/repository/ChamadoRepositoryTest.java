@@ -9,7 +9,6 @@ import com.suporti.suporti.model.enums.Setor;
 import com.suporti.suporti.model.enums.StatusChamado;
 import com.suporti.suporti.model.factory.ChamadoFactory;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -123,7 +122,6 @@ class ChamadoRepositoryTest {
     }
 
     @Test
-    @Disabled("Aguardando correção do ChamadoFactory.reconstruir para chamados finalizados com prioridade")
     void chamadoConcluidoComPrioridadeConsegueSerLidoDoBanco() {
         Incidente incidente = novoIncidente("Já resolvido");
         repository.salvar(incidente);
