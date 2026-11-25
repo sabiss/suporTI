@@ -82,7 +82,10 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     // ==========================================
 
     /**
-     * Inicia o atendimento do chamado pelo técnico (transição de ABERTO para EM_ANDAMENTO).
+     * Inicia o atendimento do chamado, alterando seu status de {@link StatusChamado#ABERTO}
+     * para {@link StatusChamado#EM_ANDAMENTO}.
+     *
+     * @throws TransicaoStatusInvalidaException se o chamado não estiver aberto
      */
     public void iniciarAtendimento() {
         if (this.status != StatusChamado.ABERTO) {
@@ -92,7 +95,9 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     }
 
     /**
-     * Conclui o atendimento do chamado registrando a data de fechamento.
+     * Conclui o chamado e registra a data e hora do fechamento.
+     *
+     * @throws TransicaoStatusInvalidaException se o chamado já estiver concluído ou cancelado
      */
     public void concluir() {
         if (this.status == StatusChamado.CONCLUIDO || this.status == StatusChamado.CANCELADO) {
@@ -103,7 +108,11 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     }
 
     /**
-     * Cancela o chamado informando um motivo. Não é permitido cancelar chamado já concluído.
+     * Cancela o chamado, registra o motivo informado e define a data e hora do fechamento.
+     *
+     * @param motivo justificativa do cancelamento; não pode ser nula nem vazia
+     * @throws TransicaoStatusInvalidaException se o chamado já estiver concluído ou cancelado
+     * @throws DadosChamadoInvalidosException se o motivo for nulo ou vazio
      */
     public void cancelar(String motivo) {
         if (this.status == StatusChamado.CONCLUIDO) {
@@ -121,7 +130,12 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     }
 
     /**
-     * Atualiza a prioridade durante a triagem e recalcula polimorficamente o prazo limite.
+     * Define a prioridade durante a triagem e recalcula o prazo limite usando a regra de SLA
+     * da subclasse concreta. A alteração da prioridade, por si só, não inicia o atendimento.
+     *
+     * @param novaPrioridade prioridade a ser atribuída ao chamado
+     * @throws DadosChamadoInvalidosException se a prioridade for nula
+     * @throws TransicaoStatusInvalidaException se o chamado já estiver finalizado
      */
     public void classificarPrioridade(Prioridade novaPrioridade) {
         if (novaPrioridade == null) {
@@ -135,7 +149,11 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     }
 
     /**
-     * Verifica se o chamado ultrapassou o SLA estipulado.
+     * Verifica se o prazo limite do chamado já foi ultrapassado. Para chamados fechados,
+     * compara a data de fechamento com o prazo; para os demais, compara o prazo com o momento atual.
+     *
+     * @return {@code true} se o prazo foi ultrapassado; {@code false} se não há prazo ou ele ainda
+     *         não foi ultrapassado
      */
     public boolean isAtrasado() {
         if (this.prazoLimite == null) {
@@ -148,7 +166,10 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     }
 
     /**
-     * Verifica se o chamado vence no dia atual (usado para destaque visual na interface).
+     * Verifica se o prazo limite cai na data atual. Chamados sem prazo ou já finalizados não
+     * são considerados como vencendo hoje.
+     *
+     * @return {@code true} se o prazo é hoje e o chamado não está finalizado; {@code false} caso contrário
      */
     public boolean isVenceHoje() {
         if (this.prazoLimite == null || (this.status != null && this.status.isFinalizado())) {
@@ -158,28 +179,37 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     }
 
     /**
-     * Indica se o chamado está apto para ter o atendimento iniciado (requer status ABERTO e prioridade definida).
+     * Indica se o chamado pode iniciar atendimento. A condição padrão exige status {@link StatusChamado#ABERTO}
+     * e prioridade definida; subclasses podem acrescentar outras condições.
+     *
+     * @return {@code true} se o atendimento pode ser iniciado; {@code false} caso contrário
      */
     public boolean podeIniciar() {
         return this.status == StatusChamado.ABERTO && this.prioridade != null;
     }
 
     /**
-     * Indica se o chamado pode ser concluído (apenas chamados EM_ANDAMENTO).
+     * Indica se o chamado está em atendimento e, portanto, pode ser concluído.
+     *
+     * @return {@code true} se o status for {@link StatusChamado#EM_ANDAMENTO}; {@code false} caso contrário
      */
     public boolean podeConcluir() {
         return this.status == StatusChamado.EM_ANDAMENTO;
     }
 
     /**
-     * Indica se o chamado pode ser cancelado (qualquer chamado não finalizado).
+     * Indica se o chamado ainda não foi concluído nem cancelado e pode ser cancelado.
+     *
+     * @return {@code true} se o chamado não está finalizado; {@code false} caso contrário
      */
     public boolean podeCancelar() {
         return this.status != null && !this.status.isFinalizado();
     }
 
     /**
-     * Indica se a prioridade pode ser definida (apenas chamados ABERTO).
+     * Indica se o chamado ainda está aberto e pode receber ou ter sua prioridade alterada.
+     *
+     * @return {@code true} se o status for {@link StatusChamado#ABERTO}; {@code false} caso contrário
      */
     public boolean podeDefinirPrioridade() {
         return this.status == StatusChamado.ABERTO;
