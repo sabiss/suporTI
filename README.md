@@ -58,6 +58,12 @@ Consulte a documentação completa e o diagrama UML em: [docs/DIAGRAMA_CLASSES.m
 ./mvnw clean package
 ```
 
+### Gerar a Documentação JavaDoc
+```bash
+./mvnw javadoc:javadoc
+```
+A documentação HTML será gerada em `target/site/apidocs/index.html`.
+
 ### Executar a Aplicação Web
 Via Spring Boot:
 ```bash
