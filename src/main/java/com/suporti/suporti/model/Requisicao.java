@@ -54,6 +54,13 @@ public class Requisicao extends Chamado {
     // IMPLEMENTAÇÃO POLIMÓRFICA DE SLACALCULAVEL
     // ==========================================
 
+    /**
+     * Retorna o limite de resolução em horas conforme a prioridade e a situação da aprovação.
+     * As prioridades alta, média e baixa correspondem a 24, 48 e 72 horas. Se a aprovação
+     * obrigatória ainda não foi concedida, são acrescentadas 24 horas.
+     *
+     * @return quantidade máxima de horas para resolução, ou {@code 0} se ainda não houver prioridade
+     */
     @Override
     public int getTempoMaximoResolucaoHoras() {
         if (getPrioridade() == null) {
@@ -76,6 +83,12 @@ public class Requisicao extends Chamado {
         return horasBase;
     }
 
+    /**
+     * Calcula o prazo limite somando o SLA à data de referência.
+     *
+     * @param dataReferencia data a partir da qual contar o prazo; se nula, usa a data e hora atuais
+     * @return data e hora limite, ou {@code null} se a requisição ainda não tiver prioridade
+     */
     @Override
     public LocalDateTime calcularPrazoLimite(LocalDateTime dataReferencia) {
         if (getPrioridade() == null) {
@@ -91,6 +104,11 @@ public class Requisicao extends Chamado {
         return false;
     }
 
+    /**
+     * Monta uma descrição legível do SLA, da prioridade e da necessidade de aprovação.
+     *
+     * @return descrição do SLA, ou indicação de que a requisição aguarda triagem se não tiver prioridade
+     */
     @Override
     public String obterDescricaoSla() {
         if (getPrioridade() == null) {
@@ -106,6 +124,13 @@ public class Requisicao extends Chamado {
     // REGRAS DE NEGÓCIO ESPECÍFICAS DE REQUISIÇÃO
     // ==========================================
 
+    /**
+     * Aprova a requisição quando ela exige aprovação e ainda não está finalizada.
+     * Após aprovar, recalcula o prazo para remover o acréscimo referente à aprovação pendente.
+     * Não altera o status nem inicia o atendimento.
+     *
+     * @throws TransicaoStatusInvalidaException se a requisição que exige aprovação já estiver finalizada
+     */
     public void aprovar() {
         if (!precisaAprovacao) {
             return;
@@ -120,6 +145,12 @@ public class Requisicao extends Chamado {
         }
     }
 
+    /**
+     * Rejeita uma requisição que exige aprovação, marcando-a como reprovada e cancelando-a.
+     *
+     * @param motivoRejeicao justificativa da rejeição; se nula, é registrada uma justificativa padrão
+     * @throws TransicaoStatusInvalidaException se a requisição não exigir aprovação ou não puder ser cancelada
+     */
     public void rejeitar(String motivoRejeicao) {
         if (!precisaAprovacao) {
             throw new TransicaoStatusInvalidaException("Esta requisição não requer aprovação para ser rejeitada.");
@@ -128,7 +159,12 @@ public class Requisicao extends Chamado {
         cancelar("Requisição rejeitada pela gestão: " + (motivoRejeicao != null ? motivoRejeicao : "Sem justificativa"));
     }
 
-    // Sobrescreve iniciarAtendimento garantindo que requisição que precisa de aprovação foi aprovada
+    /**
+     * Inicia o atendimento se a aprovação obrigatória já tiver sido concedida.
+     *
+     * @throws TransicaoStatusInvalidaException se a aprovação estiver pendente ou se a transição
+     *         para atendimento não for válida para o status atual
+     */
     @Override
     public void iniciarAtendimento() {
         if (precisaAprovacao && !Boolean.TRUE.equals(aprovado)) {
@@ -138,6 +174,11 @@ public class Requisicao extends Chamado {
         super.iniciarAtendimento();
     }
 
+    /**
+     * Verifica se a requisição está apta para iniciar atendimento, considerando também a aprovação.
+     *
+     * @return {@code true} se atende às regras de aprovação, status e prioridade; {@code false} caso contrário
+     */
     @Override
     public boolean podeIniciar() {
         if (precisaAprovacao && !Boolean.TRUE.equals(aprovado)) {
@@ -146,6 +187,12 @@ public class Requisicao extends Chamado {
         return super.podeIniciar();
     }
 
+    /**
+     * Indica se a requisição pode ser aprovada: precisa exigir aprovação, ainda não estar aprovada
+     * e não estar finalizada.
+     *
+     * @return {@code true} se a ação de aprovar estiver disponível; {@code false} caso contrário
+     */
     public boolean podeAprovar() {
         return precisaAprovacao && !Boolean.TRUE.equals(aprovado) && getStatus() != null && !getStatus().isFinalizado();
     }

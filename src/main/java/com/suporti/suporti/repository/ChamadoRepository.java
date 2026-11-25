@@ -35,7 +35,9 @@ public class ChamadoRepository {
     private final JdbcTemplate jdbc;
 
     /**
-     * O Spring entrega o JdbcTemplate já ligado ao banco (injeção de dependência).
+     * Cria o repositório usando o {@link JdbcTemplate} configurado pelo Spring.
+     *
+     * @param jdbc acesso JDBC usado para executar consultas e atualizações no banco
      */
     public ChamadoRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
@@ -55,8 +57,11 @@ public class ChamadoRepository {
             """;
 
     /**
-     * Grava um chamado novo e devolve o id gerado pelo banco.
-     * O id também é colocado no próprio objeto.
+     * Insere um novo chamado na tabela e atribui ao objeto o identificador gerado pelo SQLite.
+     *
+     * @param chamado chamado que será persistido
+     * @return identificador gerado para o chamado
+     * @throws org.springframework.dao.DataAccessException se ocorrer um erro ao inserir os dados
      */
     public Long salvar(Chamado chamado) {
         KeyHolder chaveGerada = new GeneratedKeyHolder();
@@ -101,7 +106,9 @@ public class ChamadoRepository {
      * Grava as mudanças de um chamado que já existe no banco
      * (triagem, mudança de status, cancelamento...).
      *
+     * @param chamado chamado com os dados atualizados
      * @return true se encontrou o chamado e atualizou; false se o id não existe
+     * @throws org.springframework.dao.DataAccessException se ocorrer um erro ao atualizar os dados
      */
     public boolean atualizar(Chamado chamado) {
         int linhasAlteradas = jdbc.update(conexao -> {
@@ -127,7 +134,11 @@ public class ChamadoRepository {
     // ==========================================
 
     /**
-     * Busca um chamado pelo número. Devolve Optional vazio se não existir.
+     * Busca um chamado pelo identificador e reconstrói sua subclasse concreta.
+     *
+     * @param id identificador do chamado
+     * @return {@link Optional} com o chamado encontrado, ou vazio se não existir
+     * @throws org.springframework.dao.DataAccessException se ocorrer um erro durante a consulta
      */
     public Optional<Chamado> buscarPorId(Long id) {
         List<Chamado> encontrados = jdbc.query(
@@ -136,8 +147,11 @@ public class ChamadoRepository {
     }
 
     /**
-     * Lista todos os chamados, do mais novo para o mais antigo.
-     * Os filtros (FiltroChamado) recebem essa lista e escolhem o que cada tela mostra.
+     * Lista todos os chamados da tabela, ordenados pelo identificador decrescente.
+     * Os filtros da aplicação recebem essa lista e selecionam os dados de cada tela.
+     *
+     * @return todos os chamados persistidos, do mais recente para o mais antigo
+     * @throws org.springframework.dao.DataAccessException se ocorrer um erro durante a consulta
      */
     public List<Chamado> listarTodos() {
         return jdbc.query("SELECT * FROM chamados ORDER BY id DESC", this::linhaParaChamado);
@@ -148,8 +162,13 @@ public class ChamadoRepository {
     // ==========================================
 
     /**
-     * Transforma uma linha da tabela em um objeto Incidente ou Requisicao,
-     * usando o método reconstruir da ChamadoFactory.
+     * Converte uma linha do resultado SQL em {@link Incidente} ou {@link Requisicao},
+     * reconstruindo o estado do domínio por meio de {@link ChamadoFactory}.
+     *
+     * @param rs resultado SQL posicionado na linha a ser convertida
+     * @param numeroDaLinha número da linha no resultado, fornecido pelo {@link JdbcTemplate}
+     * @return chamado reconstruído a partir das colunas da linha
+     * @throws SQLException se houver erro ao ler uma coluna do resultado
      */
     private Chamado linhaParaChamado(ResultSet rs, int numeroDaLinha) throws SQLException {
         TipoChamado tipo = TipoChamado.valueOf(rs.getString("tipo"));
@@ -176,8 +195,13 @@ public class ChamadoRepository {
     }
 
     /**
-     * Preenche as 5 colunas específicas de cada tipo, a partir da posição indicada.
-     * O tipo que não se aplica fica com as colunas vazias (NULL).
+     * Preenche as cinco colunas específicas do tipo concreto do chamado, a partir da posição
+     * indicada. As colunas que não se aplicam ao tipo recebem {@code NULL}.
+     *
+     * @param ps instrução SQL preparada para inserção ou atualização
+     * @param posicao índice do primeiro parâmetro específico do tipo
+     * @param chamado chamado cujos dados específicos serão escritos
+     * @throws SQLException se houver erro ao definir os parâmetros da instrução
      */
     private void preencherCamposDoTipo(PreparedStatement ps, int posicao, Chamado chamado) throws SQLException {
         if (chamado instanceof Incidente incidente) {
@@ -195,22 +219,44 @@ public class ChamadoRepository {
         }
     }
 
-    /** Enum → texto ("ALTA"), ou null se estiver vazio. */
+    /**
+     * Converte um valor de enumeração para o nome usado no banco.
+     *
+     * @param valor enumeração a converter
+     * @return nome da constante, ou {@code null} se o valor for nulo
+     */
     private static String nome(Enum<?> valor) {
         return valor != null ? valor.name() : null;
     }
 
-    /** LocalDateTime → texto no formato 2026-11-23T19:49:00, ou null. */
+    /**
+     * Converte uma data e hora para seu formato textual ISO-8601 local.
+     *
+     * @param data data e hora a converter
+     * @return representação textual da data, ou {@code null} se a data for nula
+     */
     private static String texto(LocalDateTime data) {
         return data != null ? data.toString() : null;
     }
 
-    /** Texto do banco → LocalDateTime, ou null. */
+    /**
+     * Converte o texto armazenado no banco para uma data e hora.
+     *
+     * @param texto valor textual no formato ISO-8601 local
+     * @return data e hora convertida, ou {@code null} se o texto for nulo
+     */
     private static LocalDateTime data(String texto) {
         return texto != null ? LocalDateTime.parse(texto) : null;
     }
 
-    /** Coluna 0/1/NULL → false/true/null. */
+    /**
+     * Converte uma coluna inteira do SQLite para Boolean, preservando valores nulos.
+     *
+     * @param rs resultado SQL da consulta
+     * @param coluna nome da coluna que contém 0, 1 ou {@code NULL}
+     * @return {@code false} para 0, {@code true} para 1 ou {@code null} se a coluna for nula
+     * @throws SQLException se houver erro ao ler a coluna
+     */
     private static Boolean booleanoOuNulo(ResultSet rs, String coluna) throws SQLException {
         int valor = rs.getInt(coluna);
         return rs.wasNull() ? null : valor == 1;

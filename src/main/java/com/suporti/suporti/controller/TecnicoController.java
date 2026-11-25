@@ -2,6 +2,9 @@ package com.suporti.suporti.controller;
 
 import com.suporti.suporti.model.Chamado;
 import com.suporti.suporti.model.enums.Prioridade;
+import com.suporti.suporti.model.exception.ChamadoNaoEncontradoException;
+import com.suporti.suporti.model.exception.DadosChamadoInvalidosException;
+import com.suporti.suporti.model.exception.TransicaoStatusInvalidaException;
 import com.suporti.suporti.service.ChamadoService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,7 +32,11 @@ public class TecnicoController {
     }
 
     /**
-     * Exibe o painel do técnico na aba selecionada ('triagem' ou 'fila').
+     * Prepara e exibe o painel do técnico com as listas de triagem e de trabalho.
+     *
+     * @param aba aba que deve aparecer inicialmente; por padrão, {@code triagem}
+     * @param model modelo usado para fornecer listas, contagens e prioridades à view
+     * @return nome da view do painel do técnico
      */
     @GetMapping
     public String painel(@RequestParam(value = "aba", defaultValue = "triagem") String aba, Model model) {
@@ -47,7 +54,16 @@ public class TecnicoController {
     }
 
     /**
-     * Ação de triagem: define a prioridade do chamado (e calcula o prazo de SLA).
+     * Define a prioridade do chamado durante a triagem e redireciona para a fila de trabalho.
+     * Essa ação calcula o SLA, mas não inicia o atendimento.
+     *
+     * @param id identificador do chamado
+     * @param prioridade prioridade selecionada pelo técnico
+     * @param redirectAttributes atributos temporários para exibir uma mensagem de sucesso
+     * @return redirecionamento para a aba da fila de trabalho
+     * @throws ChamadoNaoEncontradoException se o chamado não existir
+     * @throws DadosChamadoInvalidosException se a prioridade for nula
+     * @throws TransicaoStatusInvalidaException se o chamado já estiver finalizado
      */
     @PostMapping("/chamados/{id}/prioridade")
     public String definirPrioridade(@PathVariable("id") Long id,
@@ -59,7 +75,14 @@ public class TecnicoController {
     }
 
     /**
-     * Inicia o atendimento do chamado, alterando status para EM_ANDAMENTO.
+     * Solicita ao service o início do atendimento e redireciona para a fila de trabalho.
+     *
+     * @param id identificador do chamado
+     * @param redirectAttributes atributos temporários para exibir uma mensagem de sucesso
+     * @return redirecionamento para a aba da fila de trabalho
+     * @throws ChamadoNaoEncontradoException se o chamado não existir
+     * @throws TransicaoStatusInvalidaException se a transição não for válida, incluindo aprovação
+     *         pendente em uma requisição que a exige
      */
     @PostMapping("/chamados/{id}/iniciar")
     public String iniciar(@PathVariable("id") Long id,
@@ -70,7 +93,13 @@ public class TecnicoController {
     }
 
     /**
-     * Conclui o atendimento do chamado, alterando status para CONCLUIDO.
+     * Solicita a conclusão do chamado e redireciona para a fila de trabalho.
+     *
+     * @param id identificador do chamado
+     * @param redirectAttributes atributos temporários para exibir uma mensagem de sucesso
+     * @return redirecionamento para a aba da fila de trabalho
+     * @throws ChamadoNaoEncontradoException se o chamado não existir
+     * @throws TransicaoStatusInvalidaException se o chamado já estiver concluído ou cancelado
      */
     @PostMapping("/chamados/{id}/concluir")
     public String concluir(@PathVariable("id") Long id,
@@ -81,7 +110,16 @@ public class TecnicoController {
     }
 
     /**
-     * Cancela o chamado mediante justificativa obrigatória.
+     * Cancela o chamado com a justificativa informada e retorna à aba de origem.
+     *
+     * @param id identificador do chamado
+     * @param motivo justificativa do cancelamento; não pode ser nula nem vazia
+     * @param abaOrigem aba para a qual redirecionar após o cancelamento; por padrão, {@code fila}
+     * @param redirectAttributes atributos temporários para exibir uma mensagem de sucesso
+     * @return redirecionamento à aba indicada em {@code abaOrigem}
+     * @throws ChamadoNaoEncontradoException se o chamado não existir
+     * @throws DadosChamadoInvalidosException se o motivo for nulo ou vazio
+     * @throws TransicaoStatusInvalidaException se o chamado já estiver finalizado
      */
     @PostMapping("/chamados/{id}/cancelar")
     public String cancelar(@PathVariable("id") Long id,
@@ -94,7 +132,15 @@ public class TecnicoController {
     }
 
     /**
-     * Aprova uma requisição que exige aprovação prévia.
+     * Aprova a requisição identificada e redireciona para a fila de trabalho.
+     * A aprovação não inicia o atendimento.
+     *
+     * @param id identificador da requisição
+     * @param redirectAttributes atributos temporários para exibir uma mensagem de sucesso
+     * @return redirecionamento para a aba da fila de trabalho
+     * @throws ChamadoNaoEncontradoException se o chamado não existir
+     * @throws DadosChamadoInvalidosException se o chamado não for uma requisição
+     * @throws TransicaoStatusInvalidaException se a requisição que exige aprovação já estiver finalizada
      */
     @PostMapping("/chamados/{id}/aprovar")
     public String aprovar(@PathVariable("id") Long id,
