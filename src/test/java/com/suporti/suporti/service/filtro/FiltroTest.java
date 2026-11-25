@@ -90,6 +90,33 @@ class FiltroTest {
     }
 
     @Test
+    void filaColocaAtrasadoAntesDoQueAindaVaiVencer() {
+        // Mesmo com prioridade menor, quem já passou do prazo vem primeiro
+        Chamado vaiVencer = comPrazo(incidente("Vai vencer", Setor.TI, Prioridade.ALTA),
+                LocalDateTime.now().plusMinutes(30));
+        Chamado atrasado = comPrazo(incidente("Atrasado", Setor.TI, Prioridade.MEDIA),
+                LocalDateTime.now().minusMinutes(30));
+
+        List<Chamado> resultado = new FiltroFilaDeTrabalho()
+                .aplicar(List.of(vaiVencer, atrasado));
+
+        assertEquals(List.of(atrasado, vaiVencer), resultado);
+    }
+
+    @Test
+    void filaDesempataPeloHorarioQuandoDiaEPrioridadeSaoIguais() {
+        Chamado as15h = comPrazo(incidente("15h", Setor.TI, Prioridade.ALTA),
+                LocalDateTime.of(2026, 11, 20, 15, 0));
+        Chamado as9h = comPrazo(incidente("9h", Setor.TI, Prioridade.ALTA),
+                LocalDateTime.of(2026, 11, 20, 9, 0));
+
+        List<Chamado> resultado = new FiltroFilaDeTrabalho()
+                .aplicar(List.of(as15h, as9h));
+
+        assertEquals(List.of(as9h, as15h), resultado);
+    }
+
+    @Test
     void filaNaoMostraChamadosConcluidosNemCancelados() {
         Chamado aberto = incidente("Aberto", Setor.TI, Prioridade.ALTA);
 
