@@ -11,21 +11,8 @@
 	<groupId>com.suporti</groupId>
 	<artifactId>suporti</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<name>suporti</name>
+	<description>Sistema de Helpdesk para gerenciamento de chamados de suporte técnico - LP2</description>
 	<properties>
 		<java.version>25</java.version>
 	</properties>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${titulo != null ? titulo + ' — SuporTI' : 'SuporTI — Central de Chamados'}">SuporTI</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Cabeçalho comum -->
+    <header th:fragment="cabecalho(subtitulo, linkVoltar)" class="header-bar">
+        <div class="header-container">
+            <div class="header-left">
+                <a th:if="${linkVoltar != null}" th:href="${linkVoltar}" class="btn-voltar">‹ Voltar</a>
+                <div class="header-brand">
+                    <span class="logo-title">SuporTI</span>
+                    <span th:if="${subtitulo != null}" class="logo-sub" th:text="' · ' + ${subtitulo}"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Avisos e mensagens flash (sucesso e erro) -->
+    <div th:fragment="avisos" class="avisos-container">
+        <div th:if="${sucesso}" class="alerta alerta-sucesso">
+            <span class="alerta-icone">✓</span>
+            <span th:text="${sucesso}">Operação realizada com sucesso!</span>
+        </div>
+        <div th:if="${erro}" class="alerta alerta-erro">
+            <span class="alerta-icone">✕</span>
+            <span th:text="${erro}">Ocorreu um erro no processamento.</span>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -53,13 +53,18 @@ Consulte a documentação completa e o diagrama UML em: [docs/DIAGRAMA_CLASSES.m
 ./mvnw clean test
 ```
 
-### Compilar o Projeto
+### Compilar e Empacotar o Projeto
 ```bash
-./mvnw clean compile
+./mvnw clean package
 ```
 
 ### Executar a Aplicação Web
+Via Spring Boot:
 ```bash
 ./mvnw spring-boot:run
+```
+Ou executando o JAR gerado:
+```bash
+java -jar target/suporti-0.0.1-SNAPSHOT.jar
 ```
 A aplicação estará disponível em `http://localhost:8080`.

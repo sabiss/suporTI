@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Painel do Técnico')}"></head>
+<body>
+
+    <header th:replace="~{fragments/layout :: cabecalho('Técnico de TI', '/')}"></header>
+
+    <main class="container-principal">
+        <div th:replace="~{fragments/layout :: avisos}"></div>
+
+        <div class="page-top-bar">
+            <h2 class="page-title">Painel do técnico</h2>
+        </div>
+
+        <!-- Abas do Técnico -->
+        <div class="abas-navegacao">
+            <a th:href="@{/tecnico(aba='triagem')}"
+               class="btn-aba"
+               th:classappend="${abaAtiva == 'triagem' ? 'ativa' : ''}">
+                Aguardando triagem (<span th:text="${qtdAguardando}">0</span>)
+            </a>
+            <a th:href="@{/tecnico(aba='fila')}"
+               class="btn-aba"
+               th:classappend="${abaAtiva == 'fila' ? 'ativa' : ''}">
+                Fila de trabalho (<span th:text="${qtdFila}">0</span>)
+            </a>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ABA 1: AGUARDANDO TRIAGEM -->
+        <!-- ========================================== -->
+        <section th:if="${abaAtiva == 'triagem'}" class="secao-aba">
+            <p class="aba-descricao">Incidentes aparecem antes de requisições, ordenados do mais antigo para o mais novo.</p>
+
+            <div class="tabela-container">
+                <table class="tabela-chamados">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">Nº</th>
+                            <th>Descrição</th>
+                            <th style="width: 120px;">Tipo</th>
+                            <th style="width: 150px;">Categoria</th>
+                            <th style="width: 140px;">Setor</th>
+                            <th style="width: 140px;">Aberto em</th>
+                            <th style="width: 50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(chamadosAguardando)}">
+                            <td colspan="7" class="tabela-vazia">Nenhum chamado aguardando triagem no momento. Fila limpa! 🎉</td>
+                        </tr>
+                        <!-- Linha expandida com details/summary -->
+                        <tr th:each="c : ${chamadosAguardando}">
+                            <td colspan="7" style="padding: 0;">
+                                <details class="linha-detalhe-chamado">
+                                    <summary class="linha-summary">
+                                        <div class="resumo-grid">
+                                            <span class="col-id" th:text="${c.id}">14</span>
+                                            <div>
+                                                <strong th:text="${c.titulo}">Título do problema</strong>
+                                                <div class="text-muted" th:text="${c.descricao}">Descrição resumida...</div>
+                                            </div>
+                                            <div>
+                                                <span class="badge" th:classappend="${c.tipo.name() == 'INCIDENTE' ? 'badge-incidente' : 'badge-requisicao'}" th:text="${c.tipo}">Incidente</span>
+                                            </div>
+                                            <span th:text="${c.categoria.descricao}">Rede</span>
+                                            <span th:text="${c.setor.nomeExibicao}">Marketing</span>
+                                            <span th:text="${#temporals.format(c.dataAbertura, 'dd/MM/yyyy HH:mm')}">10/11 14:00</span>
+                                            <span class="seta-expandir">▾</span>
+                                        </div>
+                                    </summary>
+
+                                    <!-- Conteúdo expandido da linha -->
+                                    <div class="painel-expansao">
+                                        <div class="detalhes-info-grid">
+                                            <div>
+                                                <strong>Solicitante:</strong> <span th:text="${c.solicitante}">João</span>
+                                            </div>
+                                            <div>
+                                                <strong>Status atual:</strong> 
+                                                <span class="badge badge-aberto" th:text="${c.status.descricao}">Aberto</span>
+                                            </div>
+                                            <div>
+                                                <strong>Tipo & SLA:</strong> <span th:text="${c.obterDescricaoSla()}">Descrição SLA</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Formulário de Definição de Prioridade (Triagem) -->
+                                        <div class="box-triagem-acao">
+                                            <form th:action="@{/tecnico/chamados/{id}/prioridade(id=${c.id})}" method="post" class="form-inline-triagem">
+                                                <label class="form-label mb-0">Prioridade:</label>
+                                                <select name="prioridade" class="form-select select-inline" th:disabled="${!c.podeDefinirPrioridade()}">
+                                                    <option th:each="p : ${prioridades}" th:value="${p}" th:text="${p.descricao}"></option>
+                                                </select>
+                                                <button type="submit" class="btn btn-primario" th:disabled="${!c.podeDefinirPrioridade()}">Definir</button>
+                                                <span class="text-muted small">O prazo limite é calculado automaticamente na definição.</span>
+                                            </form>
+                                        </div>
+
+                                        <!-- Botões de Ações de Ciclo de Vida -->
+                                        <div class="botoes-acoes-painel">
+                                            <!-- Iniciar Atendimento -->
+                                            <form th:action="@{/tecnico/chamados/{id}/iniciar(id=${c.id})}" method="post">
+                                                <button type="submit" class="btn btn-andamento" th:disabled="${!c.podeIniciar()}">
+                                                    Em andamento
+                                                </button>
+                                            </form>
+
+                                            <!-- Concluir -->
+                                            <form th:action="@{/tecnico/chamados/{id}/concluir(id=${c.id})}" method="post">
+                                                <button type="submit" class="btn btn-concluir" th:disabled="${!c.podeConcluir()}">
+                                                    Concluir
+                                                </button>
+                                            </form>
+
+                                            <!-- Cancelar com Motivo -->
+                                            <details class="cancelar-details">
+                                                <summary class="btn btn-cancelar" th:disabled="${!c.podeCancelar()}">Cancelar</summary>
+                                                <form th:action="@{/tecnico/chamados/{id}/cancelar(id=${c.id})}" method="post" class="mt-2">
+                                                    <input type="hidden" name="abaOrigem" value="triagem">
+                                                    <input type="text" name="motivo" class="form-input" placeholder="Motivo do cancelamento..." required>
+                                                    <button type="submit" class="btn btn-cancelar mt-1">Confirmar Cancelamento</button>
+                                                </form>
+                                            </details>
+                                        </div>
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- ABA 2: FILA DE TRABALHO -->
+        <!-- ========================================== -->
+        <section th:if="${abaAtiva == 'fila'}" class="secao-aba">
+            <p class="aba-descricao">
+                <strong>Ordem:</strong> chamados mais urgentes primeiro (prazo mais próximo; no mesmo prazo: Alta > Média > Baixa).
+                Chamados atrasados aparecem com destaque em vermelho; que vencem hoje em amarelo.
+            </p>
+
+            <div class="tabela-container">
+                <table class="tabela-chamados">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">Nº</th>
+                            <th>Descrição</th>
+                            <th style="width: 100px;">Prioridade</th>
+                            <th style="width: 130px;">Prazo</th>
+                            <th style="width: 130px;">Status</th>
+                            <th style="width: 130px; text-align: center;">Situação</th>
+                            <th style="width: 50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(chamadosFila)}">
+                            <td colspan="7" class="tabela-vazia">Nenhum chamado em aberto na fila de trabalho. Parabéns! 🚀</td>
+                        </tr>
+                        <tr th:each="c : ${chamadosFila}">
+                            <td colspan="7" style="padding: 0;">
+                                <details class="linha-detalhe-chamado">
+                                    <summary class="linha-summary">
+                                        <div class="fila-grid">
+                                            <span class="col-id" th:text="${c.id}">09</span>
+                                            <div>
+                                                <strong th:text="${c.titulo}">Wi-fi caindo no setor</strong>
+                                                <div class="text-muted" th:text="${c.descricao}">Descrição resumida...</div>
+                                            </div>
+                                            <div>
+                                                <span class="badge"
+                                                      th:classappend="${c.prioridade.name() == 'ALTA' ? 'badge-alta' : (c.prioridade.name() == 'MEDIA' ? 'badge-media' : 'badge-baixa')}"
+                                                      th:text="${c.prioridade.descricao}">Alta</span>
+                                            </div>
+                                            <span th:text="${c.prazoLimite != null ? #temporals.format(c.prazoLimite, 'dd/MM/yyyy HH:mm') : '—'}">09/11</span>
+                                            <div>
+                                                <span class="badge"
+                                                      th:classappend="${c.status.name() == 'ABERTO' ? 'badge-aberto' : 'badge-andamento'}"
+                                                      th:text="${c.status.descricao}">Em andamento</span>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <span th:if="${c.isAtrasado()}" class="badge-situacao situacao-atrasado">Atrasado</span>
+                                                <span th:if="${!c.isAtrasado() and c.isVenceHoje()}" class="badge-situacao situacao-hoje">Vence hoje</span>
+                                                <span th:if="${!c.isAtrasado() and !c.isVenceHoje()}" class="badge-situacao situacao-noprazo">No prazo</span>
+                                            </div>
+                                            <span class="seta-expandir">▾</span>
+                                        </div>
+                                    </summary>
+
+                                    <!-- Conteúdo expandido da linha na Fila -->
+                                    <div class="painel-expansao">
+                                        <div class="detalhes-info-grid">
+                                            <div><strong>Solicitante:</strong> <span th:text="${c.solicitante}">Carlos</span></div>
+                                            <div><strong>Setor:</strong> <span th:text="${c.setor.nomeExibicao}">TI</span></div>
+                                            <div><strong>Categoria:</strong> <span th:text="${c.categoria.descricao}">Software</span></div>
+                                            <div class="span-2"><strong>Regra de SLA:</strong> <span th:text="${c.obterDescricaoSla()}">...</span></div>
+                                        </div>
+
+                                        <!-- Botão Aprovação (se for Requisição pendente) -->
+                                        <div th:if="${c.tipo.name() == 'REQUISICAO' and c.podeAprovar()}" class="box-aprovacao-alerta">
+                                            <span>Esta requisição requer aprovação gerencial antes de iniciar o atendimento.</span>
+                                            <form th:action="@{/tecnico/chamados/{id}/aprovar(id=${c.id})}" method="post" style="display: inline;">
+                                                <button type="submit" class="btn btn-primario btn-sm">Aprovar Requisição</button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Botões de Ciclo de Vida -->
+                                        <div class="botoes-acoes-painel">
+                                            <!-- Iniciar Atendimento -->
+                                            <form th:action="@{/tecnico/chamados/{id}/iniciar(id=${c.id})}" method="post">
+                                                <button type="submit" class="btn btn-andamento" th:disabled="${!c.podeIniciar()}">
+                                                    Iniciar Atendimento
+                                                </button>
+                                            </form>
+
+                                            <!-- Concluir Chamado -->
+                                            <form th:action="@{/tecnico/chamados/{id}/concluir(id=${c.id})}" method="post">
+                                                <button type="submit" class="btn btn-concluir" th:disabled="${!c.podeConcluir()}">
+                                                    Concluir
+                                                </button>
+                                            </form>
+
+                                            <!-- Cancelar -->
+                                            <details class="cancelar-details">
+                                                <summary class="btn btn-cancelar" th:disabled="${!c.podeCancelar()}">Cancelar</summary>
+                                                <form th:action="@{/tecnico/chamados/{id}/cancelar(id=${c.id})}" method="post" class="mt-2">
+                                                    <input type="hidden" name="abaOrigem" value="fila">
+                                                    <input type="text" name="motivo" class="form-input" placeholder="Motivo do cancelamento..." required>
+                                                    <button type="submit" class="btn btn-cancelar mt-1">Confirmar Cancelamento</button>
+                                                </form>
+                                            </details>
+                                        </div>
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+</body>
+</html>

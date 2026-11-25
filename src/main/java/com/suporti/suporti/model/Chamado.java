@@ -148,6 +148,51 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     }
 
     /**
+     * Verifica se o chamado vence no dia atual (usado para destaque visual na interface).
+     */
+    public boolean isVenceHoje() {
+        if (this.prazoLimite == null || (this.status != null && this.status.isFinalizado())) {
+            return false;
+        }
+        return this.prazoLimite.toLocalDate().isEqual(java.time.LocalDate.now());
+    }
+
+    /**
+     * Indica se o chamado está apto para ter o atendimento iniciado (requer status ABERTO e prioridade definida).
+     */
+    public boolean podeIniciar() {
+        return this.status == StatusChamado.ABERTO && this.prioridade != null;
+    }
+
+    /**
+     * Indica se o chamado pode ser concluído (apenas chamados EM_ANDAMENTO).
+     */
+    public boolean podeConcluir() {
+        return this.status == StatusChamado.EM_ANDAMENTO;
+    }
+
+    /**
+     * Indica se o chamado pode ser cancelado (qualquer chamado não finalizado).
+     */
+    public boolean podeCancelar() {
+        return this.status != null && !this.status.isFinalizado();
+    }
+
+    /**
+     * Indica se a prioridade pode ser definida (apenas chamados ABERTO).
+     */
+    public boolean podeDefinirPrioridade() {
+        return this.status == StatusChamado.ABERTO;
+    }
+
+    /**
+     * Indica se o chamado requer aprovação gerencial prévia (sobrescrito em Requisição).
+     */
+    public boolean podeAprovar() {
+        return false;
+    }
+
+    /**
      * Ordenação natural para a fila de atendimento do técnico:
      * 1. Maior prioridade primeiro (ALTA > MEDIA > BAIXA);
      * 2. Menor prazo limite (quem vence antes tem preferência);

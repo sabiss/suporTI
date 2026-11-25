@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Início')}"></head>
+<body class="bg-tela-inicial">
+
+    <main class="container-inicial">
+        <div class="card-inicial">
+            <div class="inicial-header">
+                <div class="logo-decoracao">
+                    <span class="logo-ponto red"></span>
+                    <span class="logo-ponto yellow"></span>
+                    <span class="logo-ponto green"></span>
+                </div>
+                <h1 class="titulo-principal">SuporTI</h1>
+                <p class="subtitulo-principal">Central de chamados de TI</p>
+            </div>
+
+            <p class="pergunta-modo">Como você quer entrar?</p>
+
+            <div class="botoes-modo">
+                <a th:href="@{/solicitante}" class="btn-modo">
+                    <div class="btn-modo-titulo">Sou solicitante</div>
+                    <div class="btn-modo-desc">Abrir e acompanhar chamados</div>
+                </a>
+
+                <a th:href="@{/tecnico}" class="btn-modo">
+                    <div class="btn-modo-titulo">Sou técnico de TI</div>
+                    <div class="btn-modo-desc">Triagem e fila de trabalho</div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
