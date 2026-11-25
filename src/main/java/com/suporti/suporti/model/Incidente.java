@@ -52,6 +52,13 @@ public class Incidente extends Chamado {
     // IMPLEMENTAÇÃO POLIMÓRFICA DE SLACALCULAVEL
     // ==========================================
 
+    /**
+     * Retorna o limite de resolução em horas conforme a prioridade e a indisponibilidade do sistema.
+     * Incidentes de prioridade alta têm limite de 2 horas se o sistema estiver indisponível e
+     * de 4 horas caso contrário; prioridades média e baixa têm limites de 8 e 24 horas.
+     *
+     * @return quantidade máxima de horas para resolução, ou {@code 0} se ainda não houver prioridade
+     */
     @Override
     public int getTempoMaximoResolucaoHoras() {
         if (getPrioridade() == null) {
@@ -66,6 +73,12 @@ public class Incidente extends Chamado {
         }
     }
 
+    /**
+     * Calcula o prazo limite somando o SLA à data de referência.
+     *
+     * @param dataReferencia data a partir da qual contar o prazo; se nula, usa a data e hora atuais
+     * @return data e hora limite, ou {@code null} se o incidente ainda não tiver prioridade
+     */
     @Override
     public LocalDateTime calcularPrazoLimite(LocalDateTime dataReferencia) {
         if (getPrioridade() == null) {
@@ -75,11 +88,24 @@ public class Incidente extends Chamado {
         return base.plusHours(getTempoMaximoResolucaoHoras());
     }
 
+    /**
+     * Indica se o incidente deve receber atendimento imediato por ter prioridade alta ou por
+     * representar indisponibilidade do sistema. Este método apenas informa a urgência; não altera
+     * o status nem inicia o atendimento.
+     *
+     * @return {@code true} se a prioridade for alta ou o sistema estiver indisponível;
+     *         {@code false} caso contrário
+     */
     @Override
     public boolean requerAtendimentoImediato() {
         return getPrioridade() == Prioridade.ALTA || sistemaIndisponivel;
     }
 
+    /**
+     * Monta uma descrição legível do SLA e da indisponibilidade para exibição.
+     *
+     * @return descrição do SLA, ou indicação de que o incidente aguarda triagem se não tiver prioridade
+     */
     @Override
     public String obterDescricaoSla() {
         if (getPrioridade() == null) {
@@ -99,6 +125,12 @@ public class Incidente extends Chamado {
         return sistemaIndisponivel;
     }
 
+    /**
+     * Atualiza se o sistema está indisponível e recalcula o prazo limite do incidente com base
+     * na data de abertura, quando disponível.
+     *
+     * @param sistemaIndisponivel {@code true} se o sistema estiver indisponível; {@code false} caso contrário
+     */
     public void setSistemaIndisponivel(boolean sistemaIndisponivel) {
         this.sistemaIndisponivel = sistemaIndisponivel;
         // Recalcula prazo limite se houver alteração de severidade
