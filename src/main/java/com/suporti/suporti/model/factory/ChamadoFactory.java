@@ -9,6 +9,7 @@ import com.suporti.suporti.model.enums.StatusChamado;
 import com.suporti.suporti.model.enums.Setor;
 import com.suporti.suporti.model.enums.TipoChamado;
 import com.suporti.suporti.model.exception.DadosChamadoInvalidosException;
+import com.suporti.suporti.model.exception.TransicaoStatusInvalidaException;
 
 import java.time.LocalDateTime;
 
@@ -25,7 +26,17 @@ import java.time.LocalDateTime;
 public class ChamadoFactory {
 
     /**
-     * Cria uma nova instância de Incidente com validações e prazos iniciais configurados.
+     * Cria um incidente novo, inicialmente aberto e sem prioridade.
+     *
+     * @param titulo título resumido do incidente
+     * @param descricao descrição do problema
+     * @param solicitante nome de quem abriu o incidente
+     * @param setor setor de origem
+     * @param categoria categoria técnica
+     * @param sistemaIndisponivel indica se o sistema está indisponível
+     * @param ambienteAfetado ambiente em que o problema ocorre; se vazio, a classe usa {@code Geral}
+     * @return incidente criado com a data de abertura atual
+     * @throws DadosChamadoInvalidosException se algum dado obrigatório for inválido
      */
     public static Incidente criarIncidente(String titulo, String descricao, String solicitante,
                                           Setor setor, Categoria categoria,
@@ -35,7 +46,17 @@ public class ChamadoFactory {
     }
 
     /**
-     * Cria uma nova instância de Requisição com validações e prazos iniciais configurados.
+     * Cria uma requisição nova, inicialmente aberta e sem prioridade.
+     *
+     * @param titulo título resumido da requisição
+     * @param descricao descrição do que está sendo solicitado
+     * @param solicitante nome de quem abriu a requisição
+     * @param setor setor de origem
+     * @param categoria categoria técnica
+     * @param justificativaNegocio justificativa para a solicitação
+     * @param precisaAprovacao indica se a requisição depende de aprovação gerencial
+     * @return requisição criada com a data de abertura atual
+     * @throws DadosChamadoInvalidosException se algum dado obrigatório for inválido
      */
     public static Requisicao criarRequisicao(String titulo, String descricao, String solicitante,
                                             Setor setor, Categoria categoria,
@@ -45,8 +66,19 @@ public class ChamadoFactory {
     }
 
     /**
-     * Método fábrica polimórfico genérico que instancia o chamado correto baseado no TipoChamado informado.
-     * Útil para controllers e formulários web dinâmicos.
+     * Cria um chamado do tipo solicitado, encaminhando os dados específicos para a criação
+     * de um incidente ou de uma requisição.
+     *
+     * @param tipo tipo concreto a criar
+     * @param titulo título resumido do chamado
+     * @param descricao descrição do problema ou solicitação
+     * @param solicitante nome de quem abriu o chamado
+     * @param setor setor de origem
+     * @param categoria categoria técnica
+     * @param flagEspecifica indica indisponibilidade para incidente ou necessidade de aprovação para requisição
+     * @param detalheEspecifico ambiente afetado do incidente ou justificativa da requisição
+     * @return chamado criado como {@link Incidente} ou {@link Requisicao}
+     * @throws DadosChamadoInvalidosException se o tipo for nulo ou algum dado obrigatório for inválido
      */
     public static Chamado criarChamado(TipoChamado tipo, String titulo, String descricao, String solicitante,
                                        Setor setor, Categoria categoria,
@@ -68,11 +100,31 @@ public class ChamadoFactory {
     }
 
     /**
-     * Reconstrói uma instância de Chamado a partir de dados persistidos (usado pelo ChamadoRepository).
+     * Reconstrói uma instância de {@link Chamado} a partir dos dados persistidos pelo repositório.
      *
-     * O chamado é recriado refazendo a sua "história": nasce ABERTO, recebe a prioridade
-     * e depois é levado até o status salvo pelos próprios métodos do domínio.
-     * Assim a regra "não alterar prioridade de chamado finalizado" não bloqueia a leitura.
+     * O objeto é inicialmente criado como aberto, recebe a prioridade e é levado ao status
+     * persistido usando as regras de domínio. Por fim, as datas e demais informações salvas
+     * são restauradas.
+     *
+     * @param id identificador persistido do chamado
+     * @param tipo tipo concreto a reconstruir
+     * @param titulo título salvo
+     * @param descricao descrição salva
+     * @param solicitante nome de quem abriu o chamado
+     * @param setor setor de origem
+     * @param categoria categoria técnica
+     * @param prioridade prioridade salva; pode ser nula se ainda não houve triagem
+     * @param status status salvo; se nulo, o chamado permanece aberto
+     * @param dataAbertura data e hora de abertura; se nula, o construtor usa a data atual
+     * @param prazoLimite prazo salvo; se nulo, mantém o prazo calculado a partir da prioridade
+     * @param dataFechamento data e hora de fechamento; pode ser nula
+     * @param motivoCancelamento justificativa salva para o cancelamento; pode ser nula
+     * @param flagEspecifica indisponibilidade para incidente ou necessidade de aprovação para requisição
+     * @param detalheEspecifico ambiente afetado do incidente ou justificativa da requisição
+     * @param aprovado estado de aprovação da requisição; ignorado para incidentes
+     * @return chamado reconstruído como {@link Incidente} ou {@link Requisicao}
+     * @throws DadosChamadoInvalidosException se o tipo ou os dados obrigatórios forem inválidos
+     * @throws TransicaoStatusInvalidaException se as regras de domínio impedirem a restauração do status
      */
     public static Chamado reconstruir(Long id, TipoChamado tipo, String titulo, String descricao,
                                       String solicitante, Setor setor, Categoria categoria,
