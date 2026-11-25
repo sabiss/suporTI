@@ -91,6 +91,7 @@ class ChamadoServiceTest {
 
         service.classificarPrioridade(chamado.getId(), Prioridade.ALTA);
 
+        assertEquals(StatusChamado.ABERTO, service.buscar(chamado.getId()).getStatus());
         assertTrue(service.listarAguardandoTriagem().isEmpty());
         assertEquals(List.of(chamado), service.listarFilaDeTrabalho());
         assertNotNull(service.buscar(chamado.getId()).getPrazoLimite());

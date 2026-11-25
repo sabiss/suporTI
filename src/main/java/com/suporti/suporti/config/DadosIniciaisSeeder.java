@@ -83,7 +83,7 @@ public class DadosIniciaisSeeder implements CommandLineRunner {
         );
         repository.salvar(c2);
 
-        // 3. Fila de Trabalho — Incidente Atrasado (Prazo no passado)
+        // 3. Fila de Trabalho — Incidente Atrasado (Prioridade Alta, ainda Aberto)
         Chamado c3 = ChamadoFactory.reconstruir(
                 null,
                 TipoChamado.INCIDENTE,
@@ -93,7 +93,7 @@ public class DadosIniciaisSeeder implements CommandLineRunner {
                 Setor.OPERACIONAL,
                 Categoria.REDE,
                 Prioridade.ALTA,
-                StatusChamado.EM_ANDAMENTO,
+                StatusChamado.ABERTO,
                 agora.minusDays(2),
                 agora.minusHours(5), // Atrasado!
                 null,
@@ -104,7 +104,7 @@ public class DadosIniciaisSeeder implements CommandLineRunner {
         );
         repository.salvar(c3);
 
-        // 4. Fila de Trabalho — Incidente Vence Hoje (Alta prioridade)
+        // 4. Fila de Trabalho — Incidente Vence Hoje (Alta prioridade, ainda Aberto)
         Chamado c4 = ChamadoFactory.reconstruir(
                 null,
                 TipoChamado.INCIDENTE,
@@ -114,7 +114,7 @@ public class DadosIniciaisSeeder implements CommandLineRunner {
                 Setor.FINANCEIRO,
                 Categoria.HARDWARE,
                 Prioridade.ALTA,
-                StatusChamado.EM_ANDAMENTO,
+                StatusChamado.ABERTO,
                 agora.minusHours(4),
                 agora.plusHours(2), // Vence hoje!
                 null,
