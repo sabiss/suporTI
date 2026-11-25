@@ -58,11 +58,11 @@ Consulte a documentação completa e o diagrama UML em: [docs/DIAGRAMA_CLASSES.m
 ./mvnw clean package
 ```
 
-### Gerar a Documentação JavaDoc
+### Gerar e Abrir a Documentação JavaDoc
 ```bash
-./mvnw javadoc:javadoc
+./mvnw javadoc:javadoc && xdg-open target/reports/apidocs/index.html
 ```
-A documentação HTML será gerada em `target/reports/apidocs/index.html`.
+O comando gera a documentação e abre a página HTML no navegador padrão do Linux.
 
 ### Executar a Aplicação Web
 Via Spring Boot:
