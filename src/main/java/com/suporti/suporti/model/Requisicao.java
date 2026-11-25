@@ -138,6 +138,18 @@ public class Requisicao extends Chamado {
         super.iniciarAtendimento();
     }
 
+    @Override
+    public boolean podeIniciar() {
+        if (precisaAprovacao && !Boolean.TRUE.equals(aprovado)) {
+            return false;
+        }
+        return super.podeIniciar();
+    }
+
+    public boolean podeAprovar() {
+        return precisaAprovacao && !Boolean.TRUE.equals(aprovado) && getStatus() != null && !getStatus().isFinalizado();
+    }
+
     // ==========================================
     // GETTERS E SETTERS
     // ==========================================

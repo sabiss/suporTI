@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Solicitante')}"></head>
+<body>
+
+    <header th:replace="~{fragments/layout :: cabecalho('Solicitante', '/')}"></header>
+
+    <main class="container-principal">
+        <div th:replace="~{fragments/layout :: avisos}"></div>
+
+        <!-- Barra Superior: Título + Botão de Abrir Chamado -->
+        <div class="page-top-bar">
+            <h2 class="page-title">Chamados</h2>
+            <button type="button" class="btn btn-primario" onclick="document.getElementById('detalhes-abrir-chamado').toggleAttribute('open')">
+                + Abrir chamado
+            </button>
+        </div>
+
+        <!-- Formulário de Abertura de Chamado (Expansível) -->
+        <details id="detalhes-abrir-chamado" class="formulario-card-details">
+            <summary class="formulario-card-summary">Formulário de Abertura de Novo Chamado</summary>
+            
+            <form th:action="@{/solicitante/chamados}" method="post" class="form-abertura">
+                <h3 class="form-section-title">Novo chamado</h3>
+
+                <div class="form-grid">
+                    <!-- Tipo do chamado -->
+                    <div class="form-group span-2">
+                        <label class="form-label">Tipo do chamado *</label>
+                        <div class="radio-grupo-cards">
+                            <label class="radio-card">
+                                <input type="radio" name="tipo" value="INCIDENTE" checked onchange="alternarCamposTipo()">
+                                <div class="radio-card-body">
+                                    <span class="radio-title">Algo parou de funcionar</span>
+                                    <span class="radio-sub">Incidente operacional</span>
+                                </div>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="tipo" value="REQUISICAO" onchange="alternarCamposTipo()">
+                                <div class="radio-card-body">
+                                    <span class="radio-title">Quero solicitar algo</span>
+                                    <span class="radio-sub">Nova requisição ou acesso</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Título -->
+                    <div class="form-group span-2">
+                        <label for="titulo" class="form-label">Título do problema / pedido *</label>
+                        <input type="text" id="titulo" name="titulo" class="form-input" placeholder="Ex: Impressora não imprime ou Instalar Excel" required>
+                    </div>
+
+                    <!-- Solicitante -->
+                    <div class="form-group">
+                        <label for="solicitante" class="form-label">Seu Nome (Solicitante) *</label>
+                        <input type="text" id="solicitante" name="solicitante" class="form-input" placeholder="Ex: Maria Silva" required>
+                    </div>
+
+                    <!-- Setor -->
+                    <div class="form-group">
+                        <label for="setor" class="form-label">Setor *</label>
+                        <select id="setor" name="setor" class="form-select" required>
+                            <option value="" disabled selected>Selecione o setor...</option>
+                            <option th:each="s : ${setores}" th:value="${s}" th:text="${s.nomeExibicao}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Categoria -->
+                    <div class="form-group span-2">
+                        <label for="categoria" class="form-label">Categoria *</label>
+                        <select id="categoria" name="categoria" class="form-select" required>
+                            <option value="" disabled selected>Selecione a categoria técnica...</option>
+                            <option th:each="c : ${categorias}" th:value="${c}" th:text="${c.descricao}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="form-group span-2">
+                        <label for="descricao" class="form-label">Descrição detalhada *</label>
+                        <textarea id="descricao" name="descricao" rows="3" class="form-textarea" placeholder="Descreva o que está acontecendo ou o que você precisa..." required></textarea>
+                    </div>
+
+                    <!-- Campos específicos de INCIDENTE -->
+                    <div id="campos-incidente" class="form-group-especifico span-2">
+                        <div class="form-checkbox-wrapper">
+                            <input type="checkbox" id="flagIncidente" name="flagEspecifica" value="true">
+                            <label for="flagIncidente"><strong>Sistema Indisponível?</strong> (Indisponibilidade crítica com atendimento imediato)</label>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="ambienteAfetado" class="form-label">Ambiente Afetado (opcional)</label>
+                            <input type="text" id="ambienteAfetado" name="detalheEspecifico" class="form-input" placeholder="Ex: Produção, 2º Andar, Recepção">
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos de REQUISIÇÃO (inicialmente ocultos) -->
+                    <div id="campos-requisicao" class="form-group-especifico span-2" style="display: none;">
+                        <div class="form-checkbox-wrapper">
+                            <input type="checkbox" id="flagRequisicao" name="flagEspecifica" value="true" disabled>
+                            <label for="flagRequisicao"><strong>Requer Aprovação da Gestão?</strong> (+24h para validação gerencial)</label>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="justificativaNegocio" class="form-label">Justificativa de Negócio</label>
+                            <input type="text" id="justificativaNegocio" name="detalheEspecifico" class="form-input" placeholder="Ex: Novo colaborador iniciando no setor" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-botoes-acao">
+                    <button type="button" class="btn btn-secundario" onclick="document.getElementById('detalhes-abrir-chamado').removeAttribute('open')">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primario">
+                        Abrir chamado
+                    </button>
+                </div>
+            </form>
+        </details>
+
+        <!-- Filtro por Setor -->
+        <div class="filtro-bar">
+            <form th:action="@{/solicitante}" method="get" class="filtro-form">
+                <label for="filtroSetor" class="filtro-label">Setor:</label>
+                <select id="filtroSetor" name="setor" class="form-select filtro-select" onchange="this.form.submit()">
+                    <option value="" th:selected="${setorSelecionado == null}">Todos os setores</option>
+                    <option th:each="s : ${setores}" th:value="${s}" th:text="${s.nomeExibicao}" th:selected="${setorSelecionado == s}"></option>
+                </select>
+            </form>
+        </div>
+
+        <!-- Tabela de Chamados -->
+        <div class="tabela-container">
+            <table class="tabela-chamados">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">Nº</th>
+                        <th>Descrição</th>
+                        <th>Tipo</th>
+                        <th>Categoria</th>
+                        <th>Setor</th>
+                        <th style="width: 140px; text-align: center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(chamados)}">
+                        <td colspan="6" class="tabela-vazia">Nenhum chamado encontrado para este setor.</td>
+                    </tr>
+                    <tr th:each="c : ${chamados}">
+                        <td class="col-id" th:text="${c.id}">14</td>
+                        <td>
+                            <strong th:text="${c.titulo}">Sem internet no setor</strong>
+                            <div class="text-muted" th:text="${c.descricao}">Descrição completa...</div>
+                        </td>
+                        <td>
+                            <span class="badge" th:classappend="${c.tipo.name() == 'INCIDENTE' ? 'badge-incidente' : 'badge-requisicao'}" th:text="${c.tipo}">Incidente</span>
+                        </td>
+                        <td th:text="${c.categoria.descricao}">Rede</td>
+                        <td th:text="${c.setor.nomeExibicao}">Marketing</td>
+                        <td style="text-align: center;">
+                            <span class="badge"
+                                  th:classappend="${c.status.name() == 'ABERTO' ? 'badge-aberto' : (c.status.name() == 'EM_ANDAMENTO' ? 'badge-andamento' : (c.status.name() == 'CONCLUIDO' ? 'badge-concluido' : 'badge-cancelado'))}"
+                                  th:text="${c.status.descricao}">Aberto</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        function alternarCamposTipo() {
+            const isIncidente = document.querySelector('input[name="tipo"][value="INCIDENTE"]').checked;
+            const camposInc = document.getElementById('campos-incidente');
+            const camposReq = document.getElementById('campos-requisicao');
+            
+            const flagInc = document.getElementById('flagIncidente');
+            const ambAfetado = document.getElementById('ambienteAfetado');
+            const flagReq = document.getElementById('flagRequisicao');
+            const justNegocio = document.getElementById('justificativaNegocio');
+
+            if (isIncidente) {
+                camposInc.style.display = 'block';
+                camposReq.style.display = 'none';
+                flagInc.disabled = false;
+                ambAfetado.disabled = false;
+                flagReq.disabled = true;
+                justNegocio.disabled = true;
+            } else {
+                camposInc.style.display = 'none';
+                camposReq.style.display = 'block';
+                flagInc.disabled = true;
+                ambAfetado.disabled = true;
+                flagReq.disabled = false;
+                justNegocio.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
