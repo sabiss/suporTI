@@ -4,6 +4,7 @@ import com.suporti.suporti.model.Chamado;
 import com.suporti.suporti.model.enums.Categoria;
 import com.suporti.suporti.model.enums.Setor;
 import com.suporti.suporti.model.enums.TipoChamado;
+import com.suporti.suporti.model.exception.DadosChamadoInvalidosException;
 import com.suporti.suporti.service.ChamadoService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -30,8 +31,11 @@ public class SolicitanteController {
     }
 
     /**
-     * Exibe a lista de chamados para consulta do solicitante.
-     * Opcionalmente filtra pelo setor escolhido.
+     * Carrega os chamados para consulta e prepara os dados usados pelos filtros e pelo formulário.
+     *
+     * @param setor setor pelo qual filtrar; se ausente, lista chamados de todos os setores
+     * @param model modelo usado para fornecer chamados, filtros e opções do formulário à view
+     * @return nome da view da página do solicitante
      */
     @GetMapping
     public String listar(@RequestParam(value = "setor", required = false) Setor setor, Model model) {
@@ -47,8 +51,20 @@ public class SolicitanteController {
     }
 
     /**
-     * Processa a abertura de um novo chamado pelo solicitante.
-     * Aplica o padrão Post/Redirect/Get para evitar submissões duplicadas.
+     * Cria um chamado com os dados do formulário e redireciona à lista do solicitante
+     * (padrão Post/Redirect/Get).
+     *
+     * @param tipo tipo do chamado: incidente ou requisição
+     * @param titulo título resumido do chamado
+     * @param descricao descrição detalhada do problema ou solicitação
+     * @param solicitante nome de quem está abrindo o chamado
+     * @param setor setor de origem do chamado
+     * @param categoria categoria técnica do chamado
+     * @param flagEspecifica indica indisponibilidade para incidente ou necessidade de aprovação para requisição
+     * @param detalheEspecifico ambiente afetado do incidente ou justificativa da requisição; pode ser nulo
+     * @param redirectAttributes atributos temporários usados para exibir a confirmação após o redirecionamento
+     * @return redirecionamento para a lista de chamados do solicitante
+     * @throws DadosChamadoInvalidosException se os dados obrigatórios forem inválidos
      */
     @PostMapping("/chamados")
     public String abrir(@RequestParam("tipo") TipoChamado tipo,
