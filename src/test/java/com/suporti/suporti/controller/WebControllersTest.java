@@ -4,6 +4,7 @@ import com.suporti.suporti.model.Chamado;
 import com.suporti.suporti.model.enums.Categoria;
 import com.suporti.suporti.model.enums.Prioridade;
 import com.suporti.suporti.model.enums.Setor;
+import com.suporti.suporti.model.enums.StatusChamado;
 import com.suporti.suporti.model.enums.TipoChamado;
 import com.suporti.suporti.service.ChamadoService;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,9 +16,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -115,5 +118,23 @@ class WebControllersTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/tecnico?aba=fila"))
                 .andExpect(flash().attributeExists("sucesso"));
+    }
+
+    @Test
+    @DisplayName("GET /solicitante deve exibir o status atualizado após início do atendimento")
+    void deveExibirStatusAtualizadoParaSolicitante() throws Exception {
+        Chamado chamado = chamadoService.abrir(TipoChamado.INCIDENTE, "Teclado quebrado",
+                "Teclas falhando", "Marcos", Setor.RH, Categoria.HARDWARE, false, "Geral");
+
+        mockMvc.perform(post("/tecnico/chamados/{id}/prioridade", chamado.getId())
+                        .param("prioridade", Prioridade.MEDIA.name()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/tecnico/chamados/{id}/iniciar", chamado.getId()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(get("/solicitante"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(StatusChamado.EM_ANDAMENTO.getDescricao())));
     }
 }
