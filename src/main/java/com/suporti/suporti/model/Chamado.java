@@ -186,6 +186,13 @@ public abstract class Chamado implements SlaCalculavel, Comparable<Chamado> {
     }
 
     /**
+     * Indica se o chamado requer aprovação gerencial prévia (sobrescrito em Requisição).
+     */
+    public boolean podeAprovar() {
+        return false;
+    }
+
+    /**
      * Ordenação natural para a fila de atendimento do técnico:
      * 1. Maior prioridade primeiro (ALTA > MEDIA > BAIXA);
      * 2. Menor prazo limite (quem vence antes tem preferência);
